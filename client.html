@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="fr" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Suivi de votre chantier - SuiviTravaux.app</title>
+    <meta name="description" content="Suivez l'avancement de votre chantier en temps réel">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+    <!-- Preconnect pour performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .loading { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .confetti-container { position: fixed; inset: 0; pointer-events: none; z-index: 400; overflow: hidden; }
+        .confetti {
+            position: absolute; width: 10px; height: 10px;
+            animation: confetti-fall 3s ease-out forwards;
+        }
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100%) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Dark Mode Toggle */
+        .theme-toggle {
+            position: relative;
+            width: 56px;
+            height: 28px;
+            background: #e2e8f0;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        .dark .theme-toggle {
+            background: #475569;
+        }
+        .theme-toggle-circle {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .dark .theme-toggle-circle {
+            transform: translateX(28px);
+            background: #1e293b;
+        }
+        .theme-toggle-icon {
+            width: 14px;
+            height: 14px;
+        }
+        .theme-toggle-sun { color: #f59e0b; }
+        .theme-toggle-moon { color: #fbbf24; display: none; }
+        .dark .theme-toggle-sun { display: none; }
+        .dark .theme-toggle-moon { display: block; }
+
+        /* Dark Mode Transitions */
+        body, .bg-white, .bg-slate-50, .border-slate-200, .border-slate-100 {
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 min-h-screen">
+    <!-- Loading State -->
+    <div id="loading-state" class="min-h-screen flex items-center justify-center">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4 loading">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                </svg>
+            </div>
+            <p class="text-slate-500 dark:text-slate-400">Chargement de votre chantier...</p>
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="error-state" class="min-h-screen flex items-center justify-center hidden">
+        <div class="text-center px-6">
+            <div class="text-6xl mb-4">🔗</div>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-white mb-2">Lien invalide</h1>
+            <p class="text-slate-500 dark:text-slate-400 mb-6">Ce lien de suivi n'existe pas ou a expiré.</p>
+            <p class="text-sm text-slate-400 dark:text-slate-500">Contactez votre artisan pour obtenir un nouveau lien.</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content" class="hidden">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-800 dark:to-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-4 sticky top-0 z-10">
+            <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                    </div>
+                    <span class="font-bold text-primary-600">SuiviTravaux<span class="text-slate-400 dark:text-slate-500">.app</span></span>
+                </div>
+                <!-- Dark Mode Toggle -->
+                <button id="theme-toggle" onclick="toggleTheme()" class="theme-toggle" aria-label="Changer le thème">
+                    <div class="theme-toggle-circle">
+                        <svg class="theme-toggle-icon theme-toggle-sun" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                        </svg>
+                        <svg class="theme-toggle-icon theme-toggle-moon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                        </svg>
+                    </div>
+                </button>
+            </div>
+            <h1 id="chantier-name" class="text-xl font-bold text-slate-800 dark:text-white">-</h1>
+            <p id="artisan-name" class="text-slate-500 dark:text-slate-400 text-sm">Artisan : -</p>
+        </div>
+
+        <!-- Progress Circle -->
+        <div class="px-4 py-6">
+            <div class="flex justify-center mb-6">
+                <div class="relative w-40 h-40">
+                    <svg class="w-full h-full transform -rotate-90">
+                        <circle cx="80" cy="80" r="70" stroke="#cbd5e1" class="dark:stroke-slate-700" stroke-width="12" fill="none"></circle>
+                        <circle id="progress-circle" cx="80" cy="80" r="70" stroke="#2563eb" stroke-width="12" fill="none"
+                            stroke-dasharray="440" stroke-dashoffset="440" stroke-linecap="round"></circle>
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span id="progress-percent" class="text-4xl font-bold text-slate-800 dark:text-white">0%</span>
+                        <span id="status-text" class="text-sm text-slate-500 dark:text-slate-400">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stages -->
+            <div id="stages-container" class="flex justify-between mb-6 px-2">
+                <!-- Filled dynamically -->
+            </div>
+
+            <!-- Estimated End Date -->
+            <div id="estimated-end-card" class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:bg-slate-800 dark:from-slate-800 dark:to-slate-800 rounded-2xl p-4 mb-4 shadow-sm border border-blue-100 dark:border-slate-700 hidden">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-primary-100 dark:bg-primary-900/50 rounded-full flex items-center justify-center">
+                        <span class="text-xl">📅</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">Fin estimée</p>
+                        <p id="estimated-end-date" class="font-semibold text-slate-800 dark:text-white">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Last Update Card -->
+            <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 mb-4 shadow-sm border border-slate-200 dark:border-slate-700">
+                <div class="flex justify-between items-start mb-3">
+                    <h3 class="font-semibold text-slate-800 dark:text-white">Dernière mise à jour</h3>
+                    <span id="last-update-date" class="text-xs text-slate-400 dark:text-slate-500">-</span>
+                </div>
+                <p id="last-message" class="text-slate-600 dark:text-slate-300 text-sm">Aucune mise à jour récente</p>
+            </div>
+
+            <!-- Feedback Section (only visible when completed) -->
+            <div id="feedback-section" class="hidden mb-6">
+                <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 border-2 border-green-300 dark:border-green-700 rounded-2xl p-5 text-center">
+                    <div class="text-4xl mb-3">🎉</div>
+                    <h3 class="font-bold text-slate-800 dark:text-white mb-2">Chantier terminé !</h3>
+                    <p class="text-sm text-slate-600 dark:text-slate-300 mb-4">Comment s'est passée cette expérience ?</p>
+                    <div id="emoji-feedback" class="flex justify-center gap-4 mb-4">
+                        <button onclick="selectFeedback(1)" class="emoji-btn text-4xl transition-all hover:scale-125 opacity-60 hover:opacity-100" data-mood="1">😕</button>
+                        <button onclick="selectFeedback(2)" class="emoji-btn text-4xl transition-all hover:scale-125 opacity-60 hover:opacity-100" data-mood="2">🙂</button>
+                        <button onclick="selectFeedback(3)" class="emoji-btn text-4xl transition-all hover:scale-125 opacity-60 hover:opacity-100" data-mood="3">😊</button>
+                        <button onclick="selectFeedback(4)" class="emoji-btn text-4xl transition-all hover:scale-125" data-mood="4">🤩</button>
+                    </div>
+                    <p id="feedback-hint" class="text-xs text-slate-400 dark:text-slate-500 mb-3">Optionnel, sans pression</p>
+                    <button id="submit-feedback-btn" onclick="submitFeedback()" disabled
+                        class="w-full bg-primary-600 text-white py-2 rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                        Envoyer mon avis
+                    </button>
+                </div>
+            </div>
+
+            <!-- Already Rated Section -->
+            <div id="already-rated-section" class="hidden mb-6">
+                <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 border border-green-200 dark:border-green-700 rounded-2xl p-4 text-center">
+                    <span id="rated-emoji" class="text-4xl">🤩</span>
+                    <p class="text-sm text-green-700 dark:text-green-400 mt-2 font-medium">Merci pour votre avis !</p>
+                </div>
+            </div>
+
+            <!-- History -->
+            <h3 class="font-semibold text-slate-800 dark:text-white mb-3">Historique complet</h3>
+            <div id="history-container" class="space-y-3 mb-6">
+                <!-- Filled dynamically -->
+            </div>
+
+            <!-- Contact Artisan -->
+            <div class="pt-4 mt-4 bg-slate-50 dark:bg-transparent -mx-4 px-4 pb-4 border-t border-slate-200 dark:border-slate-700">
+                <h3 class="font-semibold text-slate-800 dark:text-white mb-3">Contacter l'artisan</h3>
+                <div class="flex gap-2">
+                    <a id="call-btn" href="tel:" class="flex-1 bg-primary-600 text-white py-3 rounded-xl font-medium flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                        </svg>
+                        Appeler
+                    </a>
+                    <a id="whatsapp-btn" href="" target="_blank" class="flex-1 bg-green-500 text-white py-3 rounded-xl font-medium flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                        </svg>
+                        WhatsApp
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center py-6 bg-slate-200/50 dark:bg-transparent">
+            <p class="text-xs text-slate-500 dark:text-slate-500 mb-2">
+                Propulsé par <a href="/" class="text-primary-600 dark:text-primary-500 font-medium">SuiviTravaux.app</a>
+            </p>
+            <div class="flex justify-center gap-3 text-xs">
+                <button onclick="showClientLegal('privacy')" class="text-slate-500 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400">Confidentialité</button>
+                <span class="text-slate-400 dark:text-slate-600">•</span>
+                <button onclick="showClientLegal('terms')" class="text-slate-500 dark:text-slate-500 hover:text-primary-600 dark:hover:text-primary-400">CGU</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legal Modal pour Client -->
+    <div id="clientLegalModal" class="fixed inset-0 bg-black/50 z-50 hidden items-end justify-center" onclick="closeClientLegal(event)">
+        <div class="bg-slate-50 dark:bg-slate-800 rounded-t-3xl w-full max-w-lg max-h-[85vh] overflow-hidden" onclick="event.stopPropagation()">
+            <div class="sticky top-0 bg-slate-50 dark:bg-slate-800 p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                <h2 id="client-legal-title" class="text-lg font-bold text-slate-800 dark:text-white">Informations légales</h2>
+                <button onclick="closeClientLegal()" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="client-legal-content" class="p-4 overflow-y-auto text-sm text-slate-600 dark:text-slate-300 space-y-4" style="max-height: 70vh;">
+                <!-- Contenu injecté dynamiquement -->
+            </div>
+        </div>
+    </div>
+
+    <script src="supabase-config.js"></script>
+    <script>
+        // Variables globales
+        let currentToken = null;
+        let currentChantier = null;
+        let selectedMood = 0;
+        let isDarkMode = false;
+
+        // Gestion du thème
+        function initTheme() {
+            // Vérifier la préférence sauvegardée ou la préférence système
+            const savedTheme = localStorage.getItem('client-theme');
+            if (savedTheme) {
+                isDarkMode = savedTheme === 'dark';
+            } else {
+                // Respecter la préférence système
+                isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            }
+            applyTheme();
+
+            // Écouter les changements de préférence système
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                if (!localStorage.getItem('client-theme')) {
+                    isDarkMode = e.matches;
+                    applyTheme();
+                }
+            });
+        }
+
+        function applyTheme() {
+            const html = document.documentElement;
+            if (isDarkMode) {
+                html.classList.add('dark');
+                html.classList.remove('light');
+                document.querySelector('meta[name="theme-color"]').content = '#1e293b';
+            } else {
+                html.classList.remove('dark');
+                html.classList.add('light');
+                document.querySelector('meta[name="theme-color"]').content = '#2563eb';
+            }
+        }
+
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            localStorage.setItem('client-theme', isDarkMode ? 'dark' : 'light');
+            applyTheme();
+        }
+
+        // Initialiser le thème immédiatement
+        initTheme();
+
+        // Sécurité - Échappement HTML contre XSS
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Récupérer le token de l'URL
+            const urlParams = new URLSearchParams(window.location.search);
+            currentToken = urlParams.get('t');
+
+            if (!currentToken) {
+                showError();
+                return;
+            }
+
+            try {
+                // Initialiser Supabase
+                SuiviTravauxAPI.init();
+
+                // Charger les données du chantier
+                await loadChantier();
+            } catch (error) {
+                console.error('Erreur:', error);
+                showError();
+            }
+        });
+
+        // Charger les données du chantier
+        async function loadChantier() {
+            try {
+                currentChantier = await SuiviTravauxAPI.ClientAPI.getChantierByToken(currentToken);
+
+                if (!currentChantier) {
+                    showError();
+                    return;
+                }
+
+                // Charger l'historique
+                const updates = await SuiviTravauxAPI.ClientAPI.getUpdatesByToken(currentToken);
+
+                // Afficher les données
+                renderChantier(currentChantier, updates);
+                showMain();
+
+            } catch (error) {
+                console.error('Erreur chargement:', error);
+                showError();
+            }
+        }
+
+        // Rafraîchir automatiquement quand le client revient sur la page
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'visible' && currentToken) {
+                console.log('🔄 Actualisation automatique...');
+                await loadChantier();
+            }
+        });
+
+        // Rafraîchir au focus (mobile)
+        window.addEventListener('focus', async () => {
+            if (currentToken) {
+                setTimeout(() => loadChantier(), 500);
+            }
+        });
+
+        // Afficher le chantier
+        function renderChantier(chantier, updates) {
+            // Infos de base
+            document.getElementById('chantier-name').textContent = chantier.name;
+            document.getElementById('artisan-name').textContent = 'Artisan : ' + chantier.artisan_name;
+
+            // Progression circulaire
+            const circumference = 2 * Math.PI * 70;
+            const offset = circumference - (chantier.progress / 100) * circumference;
+            document.getElementById('progress-circle').setAttribute('stroke-dashoffset', offset);
+            document.getElementById('progress-percent').textContent = chantier.progress + '%';
+            document.getElementById('status-text').textContent = chantier.status;
+
+            // Changer la couleur si terminé
+            if (chantier.progress === 100) {
+                document.getElementById('progress-circle').setAttribute('stroke', '#22c55e');
+            }
+
+            // Dernière mise à jour
+            if (chantier.updated_at) {
+                const date = new Date(chantier.updated_at);
+                document.getElementById('last-update-date').textContent = date.toLocaleDateString('fr-FR', {
+                    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                });
+            }
+            document.getElementById('last-message').textContent = chantier.last_message || 'Aucune mise à jour récente';
+
+            // Date de fin estimée
+            const estimatedEndCard = document.getElementById('estimated-end-card');
+            const estimatedEndDate = document.getElementById('estimated-end-date');
+            if (chantier.estimated_end && chantier.progress < 100) {
+                const endDate = new Date(chantier.estimated_end);
+                const formattedDate = endDate.toLocaleDateString('fr-FR', {
+                    day: 'numeric', month: 'long', year: 'numeric'
+                });
+                estimatedEndDate.textContent = formattedDate;
+                estimatedEndCard.classList.remove('hidden');
+
+                // Calculer si proche ou dépassée
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const daysRemaining = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+
+                if (daysRemaining < 0) {
+                    estimatedEndDate.innerHTML = formattedDate + ' <span class="text-amber-500 text-xs">(délai dépassé)</span>';
+                } else if (daysRemaining <= 3) {
+                    estimatedEndDate.innerHTML = formattedDate + ' <span class="text-primary-600 dark:text-primary-400 text-xs">(bientôt !)</span>';
+                }
+            } else if (chantier.progress >= 100) {
+                // Chantier terminé - afficher "Livré"
+                estimatedEndDate.textContent = 'Livré !';
+                estimatedEndCard.classList.remove('hidden');
+                estimatedEndCard.querySelector('.w-10').innerHTML = '<span class="text-xl">✅</span>';
+                estimatedEndCard.querySelector('.text-sm').textContent = 'Statut';
+            } else {
+                estimatedEndCard.classList.add('hidden');
+            }
+
+            // Stages
+            renderStages(chantier.stage, chantier.progress);
+
+            // Historique
+            renderHistory(updates);
+
+            // Contact
+            if (chantier.artisan_phone) {
+                const cleanPhone = chantier.artisan_phone.replace(/[\s\-\.]/g, '');
+                document.getElementById('call-btn').href = 'tel:' + cleanPhone;
+
+                // Format international pour WhatsApp
+                let whatsappPhone = cleanPhone.replace(/[^0-9]/g, '');
+                if (whatsappPhone.startsWith('0')) {
+                    // Détecter si c'est un numéro DOM-TOM ou métropole
+                    if (whatsappPhone.startsWith('0692') || whatsappPhone.startsWith('0693')) {
+                        whatsappPhone = '262' + whatsappPhone.slice(1); // Réunion
+                    } else if (whatsappPhone.startsWith('0694') || whatsappPhone.startsWith('0696') || whatsappPhone.startsWith('0697')) {
+                        whatsappPhone = '596' + whatsappPhone.slice(1); // Martinique/Guadeloupe
+                    } else {
+                        whatsappPhone = '33' + whatsappPhone.slice(1); // Métropole
+                    }
+                }
+                document.getElementById('whatsapp-btn').href = 'https://wa.me/' + whatsappPhone;
+            }
+
+            // Feedback section
+            if (chantier.progress === 100) {
+                if (chantier.client_feedback) {
+                    document.getElementById('already-rated-section').classList.remove('hidden');
+                    const emojis = {1: '😕', 2: '🙂', 3: '😊', 4: '🤩'};
+                    document.getElementById('rated-emoji').textContent = emojis[chantier.client_feedback];
+                } else {
+                    document.getElementById('feedback-section').classList.remove('hidden');
+                }
+            }
+        }
+
+        // Afficher les étapes
+        function renderStages(currentStage, progress) {
+            const container = document.getElementById('stages-container');
+            const stages = ['preparation', 'en_cours', 'finitions', 'livre'];
+            const stageNames = ['Prépa', 'En cours', 'Finitions', 'Livré'];
+            const currentIndex = stages.indexOf(currentStage);
+            const isCompleted = currentStage === 'livre' || progress === 100;
+
+            let html = '';
+            stages.forEach((stage, i) => {
+                const isDone = isCompleted ? true : (i < currentIndex);
+                const isCurrent = isCompleted ? false : (i === currentIndex);
+                const bgClass = isDone ? 'bg-green-500 text-white' : (isCurrent ? 'bg-primary-600 text-white' : 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-500');
+                const textClass = isDone ? 'text-green-600 dark:text-green-400 font-medium' : (isCurrent ? 'text-primary-600 dark:text-primary-400 font-medium' : 'text-slate-500 dark:text-slate-500');
+                const lineClass = isDone || (isCompleted && i < stages.length - 1) ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-700';
+                const content = isDone ? '✓' : (i + 1);
+
+                html += `<div class="flex flex-col items-center">
+                    <div class="w-8 h-8 ${bgClass} rounded-full flex items-center justify-center text-sm">${content}</div>
+                    <span class="text-xs ${textClass} mt-1">${stageNames[i]}</span>
+                </div>`;
+
+                if (i < stages.length - 1) {
+                    html += `<div class="flex-1 h-1 ${lineClass} self-center mx-2 rounded"></div>`;
+                }
+            });
+            container.innerHTML = html;
+        }
+
+        // Afficher l'historique
+        function renderHistory(updates) {
+            const container = document.getElementById('history-container');
+
+            if (!updates || updates.length === 0) {
+                container.innerHTML = '<p class="text-slate-400 dark:text-slate-500 text-sm text-center">Aucun historique</p>';
+                return;
+            }
+
+            let html = '';
+            updates.forEach(u => {
+                const date = new Date(u.created_at);
+                const dateStr = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+                const safeTitle = escapeHtml(u.title);
+                const safeMessage = escapeHtml(u.message);
+
+                html += `
+                <div class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-sm">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium text-slate-700 dark:text-slate-200">${safeTitle}</span>
+                        <span class="text-xs text-slate-400 dark:text-slate-500">${dateStr}</span>
+                    </div>
+                    ${u.message ? `<p class="text-xs text-slate-500 dark:text-slate-400 mb-2">${safeMessage}</p>` : ''}
+                    <div class="flex items-center gap-2">
+                        <div class="h-1.5 flex-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div class="h-full bg-primary-600 rounded-full" style="width:${u.progress}%"></div>
+                        </div>
+                        <span class="text-xs text-slate-500 dark:text-slate-400">${u.progress}%</span>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        // Sélection du feedback
+        function selectFeedback(mood) {
+            selectedMood = mood;
+            document.querySelectorAll('.emoji-btn').forEach(btn => {
+                const btnMood = parseInt(btn.dataset.mood);
+                if (btnMood === mood) {
+                    btn.classList.remove('opacity-60');
+                    btn.classList.add('scale-125', 'opacity-100');
+                } else {
+                    btn.classList.add('opacity-60');
+                    btn.classList.remove('scale-125', 'opacity-100');
+                }
+            });
+
+            const messages = {
+                1: "Merci pour votre honnêteté",
+                2: "Merci pour votre retour",
+                3: "Content que ça se soit bien passé !",
+                4: "Génial ! Merci beaucoup !"
+            };
+            document.getElementById('feedback-hint').textContent = messages[mood];
+            document.getElementById('submit-feedback-btn').disabled = false;
+
+            if (mood === 4) showConfetti();
+        }
+
+        // Soumettre le feedback
+        async function submitFeedback() {
+            if (selectedMood === 0) return;
+
+            try {
+                await SuiviTravauxAPI.ClientAPI.submitFeedback(currentToken, selectedMood);
+
+                document.getElementById('feedback-section').classList.add('hidden');
+                document.getElementById('already-rated-section').classList.remove('hidden');
+                const emojis = {1: '😕', 2: '🙂', 3: '😊', 4: '🤩'};
+                document.getElementById('rated-emoji').textContent = emojis[selectedMood];
+
+                showConfetti();
+            } catch (error) {
+                console.error('Erreur feedback:', error);
+                alert('Erreur lors de l\'envoi. Réessayez.');
+            }
+        }
+
+        // Affichage des états
+        function showMain() {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('error-state').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+        }
+
+        function showError() {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('main-content').classList.add('hidden');
+            document.getElementById('error-state').classList.remove('hidden');
+        }
+
+        // Confetti
+        function showConfetti() {
+            const container = document.createElement('div');
+            container.className = 'confetti-container';
+            document.body.appendChild(container);
+
+            const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                container.appendChild(confetti);
+            }
+            setTimeout(() => container.remove(), 4000);
+        }
+
+        // Legal Modal
+        const legalContent = {
+            privacy: {
+                title: 'Politique de confidentialité',
+                content: `
+                    <p class="text-xs text-slate-400 dark:text-slate-500">Dernière mise à jour : Janvier 2025</p>
+                    <h3 class="font-semibold text-slate-800 dark:text-white">1. Vos données</h3>
+                    <p>En tant que client, les seules données vous concernant sont le nom et téléphone fournis par votre artisan pour ce chantier.</p>
+                    <h3 class="font-semibold text-slate-800 dark:text-white">2. Utilisation</h3>
+                    <p>Vos données servent uniquement à vous permettre de suivre l'avancement de votre chantier.</p>
+                    <h3 class="font-semibold text-slate-800 dark:text-white">3. Sécurité</h3>
+                    <p>L'accès à votre chantier est protégé par un lien unique. Seules les personnes possédant ce lien peuvent y accéder.</p>
+                    <h3 class="font-semibold text-slate-800 dark:text-white">4. Conservation</h3>
+                    <p>Les données sont conservées pendant la durée du chantier et peuvent être supprimées par l'artisan à tout moment.</p>
+                    <h3 class="font-semibold text-slate-800 dark:text-white">5. Contact</h3>
+                    <p>Pour toute question : <a href="mailto:privacy@suivitravaux.app" class="text-primary-600 dark:text-primary-400">privacy@suivitravaux.app</a></p>
+                `
+            },
+            terms: {
+                title: 'Conditions d\'utilisation',
+                content: `
+                    <p class="text-xs text-slate-400 dark:text-slate-500">Dernière mise à jour : Janvier 2025</p>
+                    <h3 class="font-semibold text-slate-800 dark:text-white">1. Service</h3>
+                    <p>SuiviTravaux.app permet aux artisans de partager l'avancement de leurs chantiers avec leurs clients.</p>
+                    <h3 class="font-semibold text-slate-800 dark:text-white">2. Accès</h3>
+                    <p>L'accès au suivi de votre chantier est gratuit et ne nécessite pas de création de compte.</p>
+                    <h3 class="font-semibold text-slate-800 dark:text-white">3. Responsabilité</h3>
+                    <p>Les informations affichées sont fournies par votre artisan. Nous ne sommes pas responsables de leur exactitude.</p>
+                    <h3 class="font-semibold text-slate-800 dark:text-white">4. Contact artisan</h3>
+                    <p>Pour toute question sur votre chantier, contactez directement votre artisan via les boutons Appeler ou WhatsApp.</p>
+                `
+            }
+        };
+
+        function showClientLegal(type) {
+            const modal = document.getElementById('clientLegalModal');
+            const title = document.getElementById('client-legal-title');
+            const content = document.getElementById('client-legal-content');
+
+            title.textContent = legalContent[type].title;
+            content.innerHTML = legalContent[type].content;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeClientLegal(event) {
+            if (!event || event.target === event.currentTarget) {
+                const modal = document.getElementById('clientLegalModal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+    </script>
+</body>
+</html>

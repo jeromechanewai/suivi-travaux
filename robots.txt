@@ -1,0 +1,12 @@
+# Robots.txt pour SuiviTravaux.app
+
+User-agent: *
+Allow: /
+Allow: /preview.html
+Allow: /index.html
+
+# Bloquer les pages client (privées, liens de partage)
+Disallow: /client.html
+
+# Sitemap
+Sitemap: https://suivitravaux.app/sitemap.xml
