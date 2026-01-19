@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2563eb">
+    <title>Mon intervention - SuiviTravaux.app</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd',
+                            400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8',
+                            800: '#1e40af', 900: '#1e3a8a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .stage-btn { transition: all 0.2s ease; }
+        .stage-btn.active { transform: scale(1.05); }
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: #1e293b; color: white; padding: 12px 24px; border-radius: 12px;
+            font-size: 14px; opacity: 0; transition: all 0.3s ease; z-index: 9999;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .photo-preview { animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+<!-- Toast -->
+<div id="toast" class="toast">Message</div>
+
+<!-- Écran de chargement -->
+<div id="loading-screen" class="min-h-screen flex items-center justify-center">
+    <div class="text-center">
+        <div class="w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-4"></div>
+        <p class="text-slate-500">Chargement...</p>
+    </div>
+</div>
+
+<!-- Écran d'erreur -->
+<div id="error-screen" class="min-h-screen flex items-center justify-center p-4 hidden">
+    <div class="text-center max-w-sm">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+        </div>
+        <h2 class="text-xl font-bold text-slate-800 mb-2">Lien invalide</h2>
+        <p id="error-message" class="text-slate-500">Ce lien n'est plus valide ou a expiré. Contactez le coordinateur du chantier.</p>
+    </div>
+</div>
+
+<!-- Contenu principal -->
+<div id="main-content" class="hidden">
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
+        <div class="max-w-lg mx-auto px-4 py-3">
+            <div class="flex items-center gap-3">
+                <div id="equipe-color" class="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg">
+                    E
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h1 id="equipe-name" class="font-bold text-slate-800 truncate">Mon intervention</h1>
+                    <p id="chantier-name" class="text-xs text-slate-500 truncate">Chantier</p>
+                </div>
+                <div id="equipe-stage-badge" class="text-xs font-medium px-2 py-1 rounded-full bg-slate-100 text-slate-600">
+                    En attente
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Corps -->
+    <main class="max-w-lg mx-auto p-4 pb-32">
+        <!-- Carte principale : Mise à jour -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-4">
+            <h2 class="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Mettre à jour mon avancement
+            </h2>
+
+            <!-- Sélection étape -->
+            <p class="text-sm text-slate-600 mb-3">Où en êtes-vous ?</p>
+            <div class="grid grid-cols-4 gap-2 mb-5">
+                <button type="button" data-stage="preparation" onclick="selectStage('preparation')"
+                    class="stage-btn py-3 px-2 rounded-xl font-medium text-xs flex flex-col items-center justify-center gap-1 bg-slate-100 text-slate-700">
+                    <span class="text-xl">⏳</span>
+                    <span>Prépa</span>
+                </button>
+                <button type="button" data-stage="en_cours" onclick="selectStage('en_cours')"
+                    class="stage-btn py-3 px-2 rounded-xl font-medium text-xs flex flex-col items-center justify-center gap-1 bg-slate-100 text-slate-700">
+                    <span class="text-xl">🔵</span>
+                    <span>En cours</span>
+                </button>
+                <button type="button" data-stage="finitions" onclick="selectStage('finitions')"
+                    class="stage-btn py-3 px-2 rounded-xl font-medium text-xs flex flex-col items-center justify-center gap-1 bg-slate-100 text-slate-700">
+                    <span class="text-xl">🟠</span>
+                    <span>Finitions</span>
+                </button>
+                <button type="button" data-stage="livre" onclick="selectStage('livre')"
+                    class="stage-btn py-3 px-2 rounded-xl font-medium text-xs flex flex-col items-center justify-center gap-1 bg-slate-100 text-slate-700">
+                    <span class="text-xl">✅</span>
+                    <span>Terminé</span>
+                </button>
+            </div>
+
+            <!-- Photo -->
+            <p class="text-sm text-slate-600 mb-2">Photo <span class="text-slate-400">(optionnel, max 2)</span></p>
+            <div class="flex gap-2 mb-5 flex-wrap">
+                <div id="photos-preview" class="flex gap-2 flex-wrap"></div>
+                <label id="add-photo-btn" class="w-20 h-20 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-colors">
+                    <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span class="text-xs text-slate-400 mt-1">Ajouter</span>
+                    <input type="file" accept="image/*" capture="environment" onchange="handlePhoto(event)" class="hidden" multiple>
+                </label>
+            </div>
+
+            <!-- Message -->
+            <p class="text-sm text-slate-600 mb-2">Un mot ? <span class="text-slate-400">(optionnel)</span></p>
+            <input type="text" id="update-message"
+                placeholder="Ex: Pose terminée, en attente du placo..."
+                maxlength="150"
+                class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 mb-5">
+
+            <!-- Bouton envoyer -->
+            <button id="submit-btn" onclick="submitUpdate()"
+                class="w-full bg-primary-600 text-white py-4 rounded-xl font-semibold text-lg hover:bg-primary-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                Envoyer la mise à jour
+            </button>
+        </div>
+
+        <!-- Contexte : Autres équipes (lecture seule) -->
+        <div id="context-section" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-4">
+            <h3 class="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+                Autres équipes sur ce chantier
+            </h3>
+            <div id="other-equipes-list" class="space-y-2">
+                <!-- Rempli dynamiquement -->
+            </div>
+            <p id="no-other-equipes" class="text-sm text-slate-400 hidden">Vous êtes la seule équipe sur ce chantier.</p>
+        </div>
+
+        <!-- Historique de mes mises à jour -->
+        <div id="history-section" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+            <h3 class="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Mon historique
+            </h3>
+            <div id="history-list" class="space-y-3">
+                <!-- Rempli dynamiquement -->
+            </div>
+            <p id="no-history" class="text-sm text-slate-400">Aucune mise à jour pour le moment.</p>
+        </div>
+    </main>
+
+    <!-- Bandeau info client -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-3 z-30">
+        <div class="max-w-lg mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2 text-xs text-slate-500">
+                <span class="text-lg">🏗️</span>
+                <span>SuiviTravaux.app</span>
+            </div>
+            <a id="contact-coordinator" href="#" class="text-xs text-primary-600 font-medium flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                </svg>
+                Contacter le coordinateur
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="supabase-config.js"></script>
+<script>
+// =============================================
+// CONFIGURATION
+// =============================================
+let interventionData = null;
+let chantierData = null;
+let selectedStage = null;
+let photos = [];
+const token = new URLSearchParams(window.location.search).get('t');
+
+// Mapping étapes
+const stageDisplay = {
+    'preparation': { icon: '⏳', text: 'Préparation', class: 'bg-slate-100 text-slate-600' },
+    'en_cours': { icon: '🔵', text: 'En cours', class: 'bg-blue-100 text-blue-600' },
+    'finitions': { icon: '🟠', text: 'Finitions', class: 'bg-amber-100 text-amber-600' },
+    'livre': { icon: '✅', text: 'Terminé', class: 'bg-green-100 text-green-600' }
+};
+
+// =============================================
+// INITIALISATION
+// =============================================
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!token) {
+        showError('Lien incomplet. Vérifiez que vous avez copié le lien en entier.');
+        return;
+    }
+
+    try {
+        await loadIntervention();
+    } catch (error) {
+        console.error('Erreur initialisation:', error);
+        showError('Impossible de charger les données. Réessayez plus tard.');
+    }
+});
+
+// =============================================
+// CHARGEMENT DES DONNÉES
+// =============================================
+async function loadIntervention() {
+    // Mode démo : charger depuis localStorage si pas de Supabase
+    if (!window.SuiviTravauxAPI) {
+        loadDemoData();
+        return;
+    }
+
+    try {
+        // Charger l'intervention par son token
+        const data = await SuiviTravauxAPI.Interventions.getByToken(token);
+
+        if (!data) {
+            showError('Cette intervention n\'existe pas ou le lien a expiré.');
+            return;
+        }
+
+        interventionData = data.intervention;
+        chantierData = data.chantier;
+
+        renderPage();
+    } catch (error) {
+        console.error('Erreur chargement:', error);
+        // Fallback mode démo
+        loadDemoData();
+    }
+}
+
+function loadDemoData() {
+    // Charger depuis le localStorage principal de preview.html
+    const mainData = localStorage.getItem('suivitravaux_data');
+
+    console.log('Token recherché:', token);
+    console.log('Données localStorage:', mainData ? 'trouvées' : 'vides');
+
+    if (mainData) {
+        try {
+            const appData = JSON.parse(mainData);
+            console.log('Chantiers trouvés:', appData.chantiers?.length || 0);
+
+            // Chercher l'équipe avec ce token dans tous les chantiers
+            for (const chantier of (appData.chantiers || [])) {
+                console.log('Chantier:', chantier.name, '- Équipes:', chantier.equipes?.length || 0);
+                if (chantier.equipes) {
+                    chantier.equipes.forEach(e => console.log('  - Équipe:', e.name, 'Token:', e.token));
+                }
+                const equipes = chantier.equipes || [];
+                const equipe = equipes.find(e => e.token === token);
+
+                if (equipe) {
+                    interventionData = {
+                        id: equipe.id,
+                        token: equipe.token,
+                        name: equipe.name,
+                        entreprise: equipe.entreprise,
+                        color: equipe.color,
+                        stage: equipe.stage || 'preparation',
+                        history: equipe.history || [],
+                        phone: equipe.phone
+                    };
+                    chantierData = {
+                        id: chantier.id,
+                        name: chantier.name,
+                        client: chantier.client,
+                        coordinatorPhone: appData.user?.phone || null,
+                        equipes: equipes.map(e => ({
+                            id: e.id,
+                            name: e.name,
+                            stage: e.stage || 'preparation',
+                            color: e.color
+                        }))
+                    };
+                    renderPage();
+                    return;
+                }
+            }
+
+            // Token non trouvé dans les données
+            showError('Ce lien n\'est pas valide ou l\'équipe a été supprimée.');
+            return;
+        } catch (e) {
+            console.error('Erreur lecture données:', e);
+        }
+    }
+
+    // Aucune donnée trouvée
+    showError('Lien invalide. Vérifiez que vous avez copié le lien en entier.');
+}
+
+// =============================================
+// AFFICHAGE
+// =============================================
+function renderPage() {
+    document.getElementById('loading-screen').classList.add('hidden');
+    document.getElementById('main-content').classList.remove('hidden');
+
+    // Header
+    const colorEl = document.getElementById('equipe-color');
+    colorEl.style.backgroundColor = interventionData.color || '#3b82f6';
+    colorEl.textContent = (interventionData.name || 'E')[0].toUpperCase();
+
+    document.getElementById('equipe-name').textContent = interventionData.name || 'Mon intervention';
+    document.getElementById('chantier-name').textContent = chantierData?.name || 'Chantier';
+
+    // Badge étape
+    const stage = stageDisplay[interventionData.stage] || stageDisplay['preparation'];
+    const badge = document.getElementById('equipe-stage-badge');
+    badge.textContent = stage.icon + ' ' + stage.text;
+    badge.className = 'text-xs font-medium px-2 py-1 rounded-full ' + stage.class;
+
+    // Sélectionner l'étape actuelle
+    selectedStage = interventionData.stage || 'preparation';
+    updateStageButtons();
+
+    // Contact coordinateur
+    if (chantierData?.coordinatorPhone) {
+        const cleanPhone = chantierData.coordinatorPhone.replace(/[\s\-\.]/g, '');
+        document.getElementById('contact-coordinator').href = 'tel:' + cleanPhone;
+    } else {
+        document.getElementById('contact-coordinator').style.display = 'none';
+    }
+
+    // Autres équipes
+    renderOtherEquipes();
+
+    // Historique
+    renderHistory();
+}
+
+function updateStageButtons() {
+    document.querySelectorAll('.stage-btn').forEach(btn => {
+        const btnStage = btn.dataset.stage;
+        btn.classList.remove('bg-primary-600', 'text-white', 'ring-2', 'ring-primary-300', 'active');
+        btn.classList.add('bg-slate-100', 'text-slate-700');
+
+        if (btnStage === selectedStage) {
+            btn.classList.remove('bg-slate-100', 'text-slate-700');
+            btn.classList.add('bg-primary-600', 'text-white', 'ring-2', 'ring-primary-300', 'active');
+        }
+    });
+}
+
+function renderOtherEquipes() {
+    const container = document.getElementById('other-equipes-list');
+    const noOthers = document.getElementById('no-other-equipes');
+
+    const otherEquipes = (chantierData?.equipes || []).filter(e => e.id !== interventionData.id);
+
+    if (otherEquipes.length === 0) {
+        container.innerHTML = '';
+        noOthers.classList.remove('hidden');
+        return;
+    }
+
+    noOthers.classList.add('hidden');
+
+    let html = '';
+    otherEquipes.forEach(eq => {
+        const stage = stageDisplay[eq.stage] || stageDisplay['preparation'];
+        html += `
+        <div class="flex items-center gap-3 py-2 px-3 bg-slate-50 rounded-xl">
+            <div class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: ${eq.color || '#94a3b8'}"></div>
+            <span class="flex-1 text-sm text-slate-700">${escapeHtml(eq.name)}</span>
+            <span class="text-xs ${stage.class} px-2 py-0.5 rounded-full">${stage.icon} ${stage.text}</span>
+        </div>`;
+    });
+
+    container.innerHTML = html;
+}
+
+function renderHistory() {
+    const container = document.getElementById('history-list');
+    const noHistory = document.getElementById('no-history');
+    const history = interventionData.history || [];
+
+    if (history.length === 0) {
+        container.innerHTML = '';
+        noHistory.classList.remove('hidden');
+        return;
+    }
+
+    noHistory.classList.add('hidden');
+
+    let html = '';
+    history.slice(0, 5).forEach(entry => {
+        const stage = stageDisplay[entry.stage] || stageDisplay['preparation'];
+        const date = formatDate(entry.date);
+
+        let photosHtml = '';
+        if (entry.photos && entry.photos.length > 0) {
+            photosHtml = '<div class="flex gap-2 mt-2">' +
+                entry.photos.map(p => `<img src="${p}" alt="Photo" class="w-16 h-16 rounded-lg object-cover">`).join('') +
+                '</div>';
+        }
+
+        html += `
+        <div class="border-l-2 border-slate-200 pl-3 py-1">
+            <div class="flex items-center gap-2 mb-1">
+                <span class="text-sm">${stage.icon}</span>
+                <span class="text-sm font-medium text-slate-800">${stage.text}</span>
+                <span class="text-xs text-slate-400">${date}</span>
+            </div>
+            ${entry.message ? `<p class="text-sm text-slate-600">${escapeHtml(entry.message)}</p>` : ''}
+            ${photosHtml}
+        </div>`;
+    });
+
+    container.innerHTML = html;
+}
+
+// =============================================
+// ACTIONS
+// =============================================
+function selectStage(stage) {
+    selectedStage = stage;
+    updateStageButtons();
+}
+
+function handlePhoto(event) {
+    const files = Array.from(event.target.files);
+    if (!files.length) return;
+
+    const remaining = 2 - photos.length;
+    const toAdd = files.slice(0, remaining);
+
+    toAdd.forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            photos.push({
+                file: file,
+                dataUrl: e.target.result
+            });
+            renderPhotosPreview();
+        };
+        reader.readAsDataURL(file);
+    });
+
+    event.target.value = '';
+}
+
+function renderPhotosPreview() {
+    const container = document.getElementById('photos-preview');
+    const addBtn = document.getElementById('add-photo-btn');
+
+    let html = '';
+    photos.forEach((photo, index) => {
+        html += `
+        <div class="relative w-20 h-20 rounded-xl overflow-hidden group photo-preview">
+            <img src="${photo.dataUrl}" alt="Photo ${index + 1}" class="w-full h-full object-cover">
+            <button onclick="removePhoto(${index})"
+                class="absolute top-1 right-1 w-6 h-6 bg-black/60 rounded-full flex items-center justify-center">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>`;
+    });
+
+    container.innerHTML = html;
+    addBtn.style.display = photos.length >= 2 ? 'none' : 'flex';
+}
+
+function removePhoto(index) {
+    photos.splice(index, 1);
+    renderPhotosPreview();
+}
+
+async function submitUpdate() {
+    if (!selectedStage) {
+        showToast('Sélectionnez une étape');
+        return;
+    }
+
+    const message = document.getElementById('update-message').value.trim();
+    const btn = document.getElementById('submit-btn');
+
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Envoi...';
+
+    try {
+        // Créer l'entrée historique
+        const historyEntry = {
+            stage: selectedStage,
+            message: message || null,
+            date: new Date().toISOString(),
+            photos: photos.map(p => p.dataUrl)
+        };
+
+        // Mettre à jour les données locales
+        interventionData.stage = selectedStage;
+        interventionData.updatedAt = new Date().toISOString();
+        if (message) interventionData.lastMessage = message;
+        if (!interventionData.history) interventionData.history = [];
+        interventionData.history.unshift(historyEntry);
+
+        // Mettre à jour dans les équipes du chantier aussi
+        if (chantierData?.equipes) {
+            const idx = chantierData.equipes.findIndex(e => e.id === interventionData.id);
+            if (idx !== -1) {
+                chantierData.equipes[idx].stage = selectedStage;
+            }
+        }
+
+        // Sauvegarder dans le localStorage principal (partagé avec preview.html)
+        saveToMainStorage();
+
+        // Si Supabase disponible, synchroniser
+        if (window.SuiviTravauxAPI?.Interventions) {
+            try {
+                await SuiviTravauxAPI.Interventions.updateByToken(token, {
+                    stage: selectedStage,
+                    message: message,
+                    photos: photos.map(p => p.dataUrl)
+                });
+            } catch (e) {
+                console.warn('Sync Supabase échouée, données sauvegardées localement');
+            }
+        }
+
+        // Reset formulaire
+        document.getElementById('update-message').value = '';
+        photos = [];
+        renderPhotosPreview();
+
+        // Rafraîchir l'affichage
+        renderPage();
+
+        // Confirmation
+        const stageText = stageDisplay[selectedStage]?.text || selectedStage;
+        showToast(`Mis à jour : ${stageText}`);
+
+    } catch (error) {
+        console.error('Erreur mise à jour:', error);
+        showToast('Erreur lors de la mise à jour');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Envoyer la mise à jour';
+    }
+}
+
+// =============================================
+// SAUVEGARDE
+// =============================================
+function saveToMainStorage() {
+    // Sauvegarder les modifications dans le localStorage principal (partagé avec preview.html)
+    const mainData = localStorage.getItem('suivitravaux_data');
+    if (!mainData) return;
+
+    try {
+        const appData = JSON.parse(mainData);
+
+        // Trouver et mettre à jour l'équipe dans le bon chantier (comparer en string)
+        for (const chantier of (appData.chantiers || [])) {
+            if (String(chantier.id) === String(chantierData.id)) {
+                const equipes = chantier.equipes || [];
+                const idx = equipes.findIndex(e => e.token === token);
+
+                if (idx !== -1) {
+                    // Mettre à jour l'équipe
+                    equipes[idx].stage = interventionData.stage;
+                    equipes[idx].history = interventionData.history;
+                    equipes[idx].updatedAt = interventionData.updatedAt;
+                    if (interventionData.lastMessage) {
+                        equipes[idx].lastMessage = interventionData.lastMessage;
+                    }
+                    chantier.equipes = equipes;
+
+                    // Sauvegarder
+                    localStorage.setItem('suivitravaux_data', JSON.stringify(appData));
+                    console.log('Données sauvegardées dans localStorage principal');
+                    return;
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Erreur sauvegarde:', e);
+    }
+}
+
+// =============================================
+// UTILITAIRES
+// =============================================
+function showError(message) {
+    document.getElementById('loading-screen').classList.add('hidden');
+    document.getElementById('error-screen').classList.remove('hidden');
+    document.getElementById('error-message').textContent = message;
+}
+
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'À l\'instant';
+    if (diffMins < 60) return `Il y a ${diffMins} min`;
+    if (diffHours < 24) return `Il y a ${diffHours}h`;
+    if (diffDays < 7) return `Il y a ${diffDays}j`;
+
+    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+</script>
+
+</body>
+</html>

@@ -528,6 +528,22 @@
                             </div>
                             <p class="text-xs text-slate-400 mt-2">Le client peut voir l'avancement sans créer de compte</p>
                         </div>
+
+                        <!-- Section Équipes / Interventions -->
+                        <div id="detail-equipes-section" class="mb-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="font-semibold text-slate-800">👥 Équipes</h3>
+                                <span id="detail-equipes-count" class="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">0</span>
+                            </div>
+                            <div id="detail-equipes-list" class="space-y-2">
+                                <!-- Généré dynamiquement par renderEquipes() -->
+                            </div>
+                            <button onclick="openAddEquipeModal()" class="w-full mt-3 py-2 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 text-sm hover:bg-slate-50 flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                Ajouter une équipe
+                            </button>
+                        </div>
+
                         <h3 class="font-semibold text-slate-800 mb-3">Historique</h3>
                         <div id="detail-history" class="space-y-4">
                             <!-- Historique dynamique -->
@@ -649,6 +665,21 @@
                                 <span>Fin estimée : <strong id="client-end-date">-</strong></span>
                             </div>
                         </div>
+
+                        <!-- Section Équipes Vue Client (si multi-équipes) -->
+                        <div id="client-equipes-section" class="mb-4 hidden">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="font-semibold text-slate-800">Avancement par équipe</h3>
+                                <span id="client-equipes-global" class="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full font-medium">0/0 terminées</span>
+                            </div>
+                            <div id="client-equipes-list" class="space-y-2">
+                                <!-- Affiche max 3 équipes actives, généré par renderClientEquipes() -->
+                            </div>
+                            <button id="client-equipes-detail-btn" onclick="toggleClientEquipesDetail()" class="hidden w-full mt-2 py-2 text-primary-600 text-sm font-medium hover:bg-primary-50 rounded-xl">
+                                Voir toutes les équipes
+                            </button>
+                        </div>
+
                         <!-- Section feedback client (visible si chantier terminé) -->
                         <div id="client-feedback-section" class="hidden mb-6">
                             <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-2xl p-5 text-center">
@@ -818,6 +849,22 @@
                         <button onclick="shareLink()" class="p-2 bg-green-100 text-green-600 rounded-lg"><svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></button>
                     </div>
                 </div>
+
+                <!-- Section Équipes / Interventions Mobile -->
+                <div id="mobile-detail-equipes-section" class="mb-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold text-slate-800 text-sm">👥 Équipes</h3>
+                        <span id="mobile-detail-equipes-count" class="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">0</span>
+                    </div>
+                    <div id="mobile-detail-equipes-list" class="space-y-2">
+                        <!-- Généré dynamiquement -->
+                    </div>
+                    <button onclick="openAddEquipeModal()" class="w-full mt-3 py-2 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 text-xs hover:bg-slate-50 flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        Ajouter une équipe
+                    </button>
+                </div>
+
                 <h3 class="font-semibold text-slate-800 mb-3">Historique</h3>
                 <div id="mobile-detail-history" class="space-y-3">
                     <!-- Historique dynamique mobile -->
@@ -992,6 +1039,52 @@
             </div>
             <button onclick="createChantierWithLoading(this)" class="w-full bg-primary-600 text-white py-4 rounded-xl font-semibold hover:bg-primary-700 mt-4">
                 Créer le chantier
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Ajouter une équipe/intervention -->
+<div id="addEquipeModal" class="modal-overlay" onclick="closeAddEquipeModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-slate-800">Ajouter une équipe</h2>
+            <button onclick="closeAddEquipeModal()" class="p-2 text-slate-400 hover:text-slate-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Nom de l'intervention *</label>
+                <input type="text" id="equipe-intervention-name" placeholder="Ex: Électricité, Plomberie, Peinture..." class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Entreprise / Artisan</label>
+                <input type="text" id="equipe-entreprise-name" placeholder="Ex: ElecPlus, Jean Plombier..." class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Telephone de l'equipe</label>
+                <input type="tel" id="equipe-phone" placeholder="0692 XX XX XX" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <p class="text-xs text-slate-400 mt-1">Pour recevoir la notification "C'est votre tour"</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Couleur</label>
+                <div class="flex gap-2">
+                    <button type="button" onclick="selectEquipeColor('#3b82f6')" class="equipe-color-btn w-8 h-8 rounded-full bg-blue-500 ring-2 ring-offset-2 ring-blue-500" data-color="#3b82f6"></button>
+                    <button type="button" onclick="selectEquipeColor('#10b981')" class="equipe-color-btn w-8 h-8 rounded-full bg-emerald-500" data-color="#10b981"></button>
+                    <button type="button" onclick="selectEquipeColor('#f59e0b')" class="equipe-color-btn w-8 h-8 rounded-full bg-amber-500" data-color="#f59e0b"></button>
+                    <button type="button" onclick="selectEquipeColor('#ef4444')" class="equipe-color-btn w-8 h-8 rounded-full bg-red-500" data-color="#ef4444"></button>
+                    <button type="button" onclick="selectEquipeColor('#8b5cf6')" class="equipe-color-btn w-8 h-8 rounded-full bg-violet-500" data-color="#8b5cf6"></button>
+                    <button type="button" onclick="selectEquipeColor('#64748b')" class="equipe-color-btn w-8 h-8 rounded-full bg-slate-500" data-color="#64748b"></button>
+                </div>
+            </div>
+            <div class="bg-blue-50 rounded-xl p-4">
+                <p class="text-sm text-blue-700">
+                    <strong>Note :</strong> L'équipe pourra mettre à jour sa progression à tout moment. Vous restez coordinateur du projet.
+                </p>
+            </div>
+            <button onclick="addEquipeToChantier()" class="w-full bg-primary-600 text-white py-4 rounded-xl font-semibold hover:bg-primary-700">
+                Ajouter l'équipe
             </button>
         </div>
     </div>
@@ -3604,6 +3697,11 @@ function renderChantierDetail() {
 
     // Update stage buttons to match current stage
     updateStageButtons(c.stage);
+
+    // Rendre la section équipes (si elle existe)
+    if (typeof renderEquipes === 'function') {
+        renderEquipes();
+    }
 }
 
 // Rendre la vue client
@@ -3894,6 +3992,11 @@ function renderClientView() {
         // Masquer les sections si pas de numéro
         if (clientContactSection) clientContactSection.style.display = 'none';
         if (mobileClientContactSection) mobileClientContactSection.style.display = 'none';
+    }
+
+    // Rendre la section équipes vue client (si multi-équipes)
+    if (typeof renderClientEquipes === 'function') {
+        renderClientEquipes();
     }
 }
 
@@ -5748,6 +5851,1044 @@ function renderArchives() {
     container.innerHTML = html;
 }
 
+// =============================================
+// GESTION DES ÉQUIPES / INTERVENTIONS
+// =============================================
+
+let selectedEquipeColor = '#3b82f6';
+
+// Ouvrir le modal d'ajout d'équipe
+function openAddEquipeModal() {
+    // Vérifier mode démo
+    if (window.isInDemoMode && window.isInDemoMode()) {
+        showDemoUpgradeModal('Ajoutez des équipes avec un compte gratuit');
+        return;
+    }
+    document.getElementById('equipe-intervention-name').value = '';
+    document.getElementById('equipe-entreprise-name').value = '';
+    const phoneInput = document.getElementById('equipe-phone');
+    if (phoneInput) phoneInput.value = '';
+    selectEquipeColor('#3b82f6');
+    document.getElementById('addEquipeModal').classList.add('active');
+}
+
+// Générer un token unique pour le lien équipe
+function generateEquipeToken() {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let token = '';
+    for (let i = 0; i < 12; i++) {
+        token += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return token;
+}
+
+// Obtenir le lien équipe
+function getEquipeLink(equipeToken) {
+    if (window.location.protocol === 'file:') {
+        const currentPath = window.location.pathname;
+        const folderPath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+        return 'file://' + folderPath + 'equipe.html?t=' + equipeToken;
+    }
+    return window.location.origin + '/equipe.html?t=' + equipeToken;
+}
+
+// Copier le lien équipe
+async function copyEquipeLink(equipeToken) {
+    const link = getEquipeLink(equipeToken);
+    try {
+        await navigator.clipboard.writeText(link);
+        showToast('Lien copie !');
+    } catch (e) {
+        // Fallback pour les navigateurs plus anciens
+        const input = document.createElement('input');
+        input.value = link;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        showToast('Lien copie !');
+    }
+}
+
+// Fermer le modal
+function closeAddEquipeModal(event) {
+    if (!event || event.target === event.currentTarget) {
+        document.getElementById('addEquipeModal').classList.remove('active');
+    }
+}
+
+// Sélectionner une couleur
+function selectEquipeColor(color) {
+    selectedEquipeColor = color;
+    document.querySelectorAll('.equipe-color-btn').forEach(btn => {
+        btn.classList.remove('ring-2', 'ring-offset-2');
+        btn.classList.remove('ring-blue-500', 'ring-emerald-500', 'ring-amber-500', 'ring-red-500', 'ring-violet-500', 'ring-slate-500');
+        if (btn.dataset.color === color) {
+            btn.classList.add('ring-2', 'ring-offset-2');
+            const colorName = {
+                '#3b82f6': 'ring-blue-500',
+                '#10b981': 'ring-emerald-500',
+                '#f59e0b': 'ring-amber-500',
+                '#ef4444': 'ring-red-500',
+                '#8b5cf6': 'ring-violet-500',
+                '#64748b': 'ring-slate-500'
+            }[color] || 'ring-blue-500';
+            btn.classList.add(colorName);
+        }
+    });
+}
+
+// Ajouter une équipe au chantier actuel
+async function addEquipeToChantier() {
+    const name = document.getElementById('equipe-intervention-name').value.trim();
+    const entreprise = document.getElementById('equipe-entreprise-name').value.trim();
+    const phone = document.getElementById('equipe-phone')?.value.trim() || '';
+
+    if (!name) {
+        showToast("Veuillez entrer un nom d'intervention");
+        return;
+    }
+
+    const chantier = getCurrentChantier();
+    if (!chantier) {
+        showToast("Aucun chantier sélectionné");
+        return;
+    }
+
+    // Générer un token unique pour le lien équipe
+    const equipeToken = generateEquipeToken();
+
+    // Créer l'équipe/intervention
+    const equipe = {
+        id: 'eq_' + Date.now(),
+        token: equipeToken, // Token pour le lien unique
+        name: name,
+        entreprise: entreprise || null,
+        phone: phone || null, // Téléphone pour SMS
+        color: selectedEquipeColor,
+        progress: 0,
+        stage: 'preparation', // preparation, en_cours, finitions, livre (mêmes 4 étapes que le chantier)
+        order: (chantier.equipes?.length || 0) + 1,
+        history: [],
+        notificationSent: false, // Pour éviter le spam SMS
+        createdAt: new Date().toISOString()
+    };
+
+    // Initialiser le tableau si nécessaire
+    if (!chantier.equipes) {
+        chantier.equipes = [];
+    }
+
+    chantier.equipes.push(equipe);
+
+    console.log('Équipe ajoutée:', equipe);
+    console.log('Chantier après ajout:', chantier.name, '- Équipes:', chantier.equipes.length);
+
+    // Sauvegarder d'abord dans localStorage (prioritaire)
+    saveData(appData);
+    console.log('Données sauvegardées dans localStorage. Vérification:', JSON.parse(localStorage.getItem('suivitravaux_data')).chantiers.find(c => c.id === chantier.id)?.equipes?.length || 0, 'équipes');
+
+    // Sync Supabase en arrière-plan (non-bloquant)
+    if (window.SuiviTravauxAPI?.Chantiers) {
+        try {
+            await SuiviTravauxAPI.Chantiers.update(chantier.id, {
+                equipes: chantier.equipes
+            });
+            console.log('Sync Supabase réussie');
+        } catch (error) {
+            console.warn('Sync Supabase ignorée (colonne equipes manquante):', error.message);
+        }
+    }
+
+    closeAddEquipeModal();
+    renderEquipes();
+    showToast('Équipe ajoutée !');
+}
+
+// Afficher les équipes dans le détail chantier
+function renderEquipes() {
+    const chantier = getCurrentChantier();
+    const equipes = chantier?.equipes || [];
+
+    // Sections desktop et mobile
+    const desktopList = document.getElementById('detail-equipes-list');
+    const mobileList = document.getElementById('mobile-detail-equipes-list');
+    const desktopCount = document.getElementById('detail-equipes-count');
+    const mobileCount = document.getElementById('mobile-detail-equipes-count');
+
+    if (equipes.length === 0) {
+        // Vider les listes mais garder la section visible pour le bouton "Ajouter"
+        if (desktopList) desktopList.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">Aucune équipe pour l\'instant</p>';
+        if (mobileList) mobileList.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">Aucune équipe pour l\'instant</p>';
+        if (desktopCount) desktopCount.textContent = '0';
+        if (mobileCount) mobileCount.textContent = '0';
+        return;
+    }
+
+    // Calculer progression (basée sur les 4 étapes)
+    const done = equipes.filter(e => e.stage === 'livre').length;
+    const total = equipes.length;
+    const countText = `${done}/${total} terminées`;
+
+    if (desktopCount) desktopCount.textContent = countText;
+    if (mobileCount) mobileCount.textContent = countText;
+
+    // Mapping des 4 étapes vers affichage
+    const stageDisplay = {
+        'preparation': { icon: '⏳', text: 'Préparation', class: 'text-slate-500 bg-slate-100' },
+        'en_cours': { icon: '🔵', text: 'En cours', class: 'text-blue-600 bg-blue-50' },
+        'finitions': { icon: '🟠', text: 'Finitions', class: 'text-amber-600 bg-amber-50' },
+        'livre': { icon: '✅', text: 'Terminé', class: 'text-green-600 bg-green-50' }
+    };
+
+    // Générer HTML
+    let html = '';
+    equipes.forEach((eq, index) => {
+        const stage = stageDisplay[eq.stage] || stageDisplay['preparation'];
+        const hasToken = eq.token ? true : false;
+
+        html += `
+        <div class="bg-white border border-slate-200 rounded-xl p-3">
+            <div class="flex items-center gap-3">
+                <div class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${eq.color}"></div>
+                <div class="flex-1 min-w-0">
+                    <p class="font-medium text-slate-800 text-sm truncate">${escapeHtml(eq.name)}</p>
+                    ${eq.entreprise ? `<p class="text-xs text-slate-500 truncate">${escapeHtml(eq.entreprise)}</p>` : ''}
+                </div>
+                <div class="flex items-center gap-1">
+                    <span class="text-xs font-medium ${stage.class} px-2 py-1 rounded-full">${stage.icon} ${stage.text}</span>
+                    ${hasToken ? `
+                    <button onclick="copyEquipeLink('${eq.token}')" class="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg" title="Copier le lien equipe">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                    </button>
+                    ` : ''}
+                    <button onclick="openEquipeUpdateModal('${eq.id}')" class="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg" title="Mettre a jour">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    </button>
+                </div>
+            </div>
+            ${eq.phone ? `<p class="text-xs text-slate-400 mt-2 flex items-center gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg> ${escapeHtml(eq.phone)}</p>` : ''}
+        </div>`;
+    });
+
+    if (desktopList) desktopList.innerHTML = html;
+    if (mobileList) mobileList.innerHTML = html;
+
+    // Mettre à jour la vue client aussi
+    renderClientEquipes();
+}
+
+// Afficher les équipes dans la vue client (simplifié)
+function renderClientEquipes() {
+    const chantier = getCurrentChantier();
+    const equipes = chantier?.equipes || [];
+
+    const section = document.getElementById('client-equipes-section');
+    const list = document.getElementById('client-equipes-list');
+    const globalCount = document.getElementById('client-equipes-global');
+    const detailBtn = document.getElementById('client-equipes-detail-btn');
+
+    if (!section || !list) return;
+
+    if (equipes.length === 0) {
+        section.classList.add('hidden');
+        return;
+    }
+
+    section.classList.remove('hidden');
+
+    // Calculer progression (basée sur les 4 étapes)
+    const done = equipes.filter(e => e.stage === 'livre').length;
+    const total = equipes.length;
+    if (globalCount) globalCount.textContent = `${done}/${total} terminées`;
+
+    // Mapping des 4 étapes
+    const stageDisplay = {
+        'preparation': { icon: '⏳', text: 'Préparation' },
+        'en_cours': { icon: '🟢', text: 'En cours' },
+        'finitions': { icon: '🟠', text: 'Finitions' },
+        'livre': { icon: '✅', text: 'Terminé' }
+    };
+
+    // Afficher max 3 équipes (les actives/finitions en priorité, puis préparation)
+    const activeEquipes = equipes.filter(e => e.stage === 'en_cours' || e.stage === 'finitions');
+    const waitingEquipes = equipes.filter(e => e.stage === 'preparation');
+    const doneEquipes = equipes.filter(e => e.stage === 'livre');
+
+    let displayEquipes = [...activeEquipes, ...waitingEquipes].slice(0, 3);
+    if (displayEquipes.length === 0) {
+        displayEquipes = doneEquipes.slice(0, 3);
+    }
+
+    let html = '';
+    displayEquipes.forEach(eq => {
+        const stage = stageDisplay[eq.stage] || stageDisplay['preparation'];
+
+        html += `
+        <div class="flex items-center gap-3 py-2">
+            <div class="w-2 h-2 rounded-full" style="background-color: ${eq.color}"></div>
+            <span class="flex-1 text-sm text-slate-700">${escapeHtml(eq.name)}</span>
+            <span class="text-xs text-slate-500">${stage.icon} ${stage.text}</span>
+        </div>`;
+    });
+
+    list.innerHTML = html;
+
+    // Bouton "Voir toutes" si plus de 3 équipes
+    if (detailBtn) {
+        if (equipes.length > 3) {
+            detailBtn.classList.remove('hidden');
+        } else {
+            detailBtn.classList.add('hidden');
+        }
+    }
+}
+
+// Toggle détail équipes client
+let clientEquipesExpanded = false;
+function toggleClientEquipesDetail() {
+    clientEquipesExpanded = !clientEquipesExpanded;
+    const list = document.getElementById('client-equipes-list');
+    const btn = document.getElementById('client-equipes-detail-btn');
+    const chantier = getCurrentChantier();
+    const equipes = chantier?.equipes || [];
+
+    if (!list || !btn) return;
+
+    // Mapping des 4 étapes
+    const stageDisplay = {
+        'preparation': { icon: '⏳', text: 'Préparation' },
+        'en_cours': { icon: '🟢', text: 'En cours' },
+        'finitions': { icon: '🟠', text: 'Finitions' },
+        'livre': { icon: '✅', text: 'Terminé' }
+    };
+
+    if (clientEquipesExpanded) {
+        // Afficher toutes les équipes
+        let html = '';
+        equipes.forEach(eq => {
+            const stage = stageDisplay[eq.stage] || stageDisplay['preparation'];
+
+            html += `
+            <div class="flex items-center gap-3 py-2">
+                <div class="w-2 h-2 rounded-full" style="background-color: ${eq.color}"></div>
+                <span class="flex-1 text-sm text-slate-700">${escapeHtml(eq.name)}</span>
+                <span class="text-xs text-slate-500">${stage.icon} ${stage.text}</span>
+            </div>`;
+        });
+        list.innerHTML = html;
+        btn.textContent = 'Réduire';
+    } else {
+        renderClientEquipes();
+        btn.textContent = 'Voir toutes les équipes';
+    }
+}
+
+// Variables pour le modal équipe
+let currentEquipeUpdateId = null;
+let equipeUpdatePhotos = [];
+
+// Ouvrir le modal de mise à jour d'une équipe
+function openEquipeUpdateModal(equipeId) {
+    const chantier = getCurrentChantier();
+    const equipe = chantier?.equipes?.find(e => e.id === equipeId);
+
+    if (!equipe) return;
+
+    currentEquipeUpdateId = equipeId;
+    equipeUpdatePhotos = [];
+
+    // 4 étapes de progression (mêmes que le chantier)
+    const stageOptions = [
+        { value: 'preparation', label: 'Prépa', icon: '⏳' },
+        { value: 'en_cours', label: 'En cours', icon: '🔵' },
+        { value: 'finitions', label: 'Finitions', icon: '🟠' },
+        { value: 'livre', label: 'Terminé', icon: '✅' }
+    ];
+
+    let optionsHtml = stageOptions.map(opt => `
+        <button type="button" data-stage="${opt.value}"
+            onclick="selectEquipeStage('${opt.value}')"
+            class="equipe-stage-btn py-3 px-2 rounded-xl font-medium text-xs flex flex-col items-center justify-center gap-1 transition-all ${equipe.stage === opt.value ? 'bg-primary-600 text-white ring-2 ring-primary-300' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
+            <span class="text-lg">${opt.icon}</span>
+            <span>${opt.label}</span>
+        </button>
+    `).join('');
+
+    const safeName = escapeHtml(equipe.name);
+    const safeEntreprise = equipe.entreprise ? escapeHtml(equipe.entreprise) : '';
+
+    const modalHtml = `
+    <div id="equipeStatusModal" class="modal-overlay active" onclick="closeEquipeStatusModal(event)" style="align-items: center; z-index: 10001;">
+        <div class="bg-white rounded-2xl w-full max-w-sm mx-4 p-5 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-3">
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800">${safeName}</h3>
+                    ${safeEntreprise ? `<p class="text-xs text-slate-500">${safeEntreprise}</p>` : ''}
+                </div>
+                <button onclick="closeEquipeStatusModal()" class="p-1 text-slate-400 hover:text-slate-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Étape -->
+            <p class="text-sm font-medium text-slate-700 mb-2">Où en êtes-vous ?</p>
+            <div class="grid grid-cols-4 gap-2 mb-4">
+                ${optionsHtml}
+            </div>
+
+            <!-- Photo optionnelle (max 2) -->
+            <div class="mb-4">
+                <p class="text-sm font-medium text-slate-700 mb-2">Photo <span class="text-slate-400 font-normal">(optionnel)</span></p>
+                <div class="flex gap-2">
+                    <!-- Preview photos -->
+                    <div id="equipe-photos-preview" class="flex gap-2 flex-wrap"></div>
+                    <!-- Bouton ajouter photo -->
+                    <label id="equipe-add-photo-btn" class="w-16 h-16 border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-colors">
+                        <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <span class="text-[10px] text-slate-400 mt-0.5">Ajouter</span>
+                        <input type="file" accept="image/*" capture="environment" onchange="handleEquipePhoto(event)" class="hidden" multiple>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Message optionnel -->
+            <div class="mb-4">
+                <p class="text-sm font-medium text-slate-700 mb-2">Un mot ? <span class="text-slate-400 font-normal">(optionnel)</span></p>
+                <input type="text" id="equipe-update-message"
+                    placeholder="Ex: Pose terminée, en attente du placo..."
+                    maxlength="150"
+                    class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+            </div>
+
+            <!-- Bouton principal -->
+            <button id="equipe-update-submit-btn" onclick="submitEquipeUpdate()"
+                class="w-full bg-primary-600 text-white py-3 rounded-xl font-semibold hover:bg-primary-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                Mettre à jour
+            </button>
+
+            <!-- Historique de cette équipe -->
+            ${renderEquipeHistoryHtml(equipe)}
+
+            <!-- Lien supprimer (discret) -->
+            <button onclick="deleteEquipe('${equipeId}')" class="w-full mt-3 py-2 text-slate-400 text-xs hover:text-red-500 transition-colors">
+                Supprimer cette intervention
+            </button>
+        </div>
+    </div>`;
+
+    // Ajouter au DOM
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // Stocker l'étape actuelle sélectionnée
+    document.getElementById('equipeStatusModal').dataset.selectedStage = equipe.stage;
+}
+
+// Générer le HTML de l'historique d'une équipe
+function renderEquipeHistoryHtml(equipe) {
+    const history = equipe.history || [];
+
+    if (history.length === 0) {
+        return '';
+    }
+
+    const stageDisplay = {
+        'preparation': { icon: '⏳', text: 'Préparation' },
+        'en_cours': { icon: '🔵', text: 'En cours' },
+        'finitions': { icon: '🟠', text: 'Finitions' },
+        'livre': { icon: '✅', text: 'Terminé' }
+    };
+
+    let historyHtml = '';
+    history.slice(0, 5).forEach(entry => {
+        const stage = stageDisplay[entry.stage] || stageDisplay['preparation'];
+        const date = formatDateRelative(entry.date);
+
+        let photosHtml = '';
+        if (entry.photos && entry.photos.length > 0) {
+            photosHtml = '<div class="flex gap-1 mt-1">' +
+                entry.photos.map(p => `<img src="${p}" alt="Photo" class="w-10 h-10 rounded object-cover cursor-pointer" onclick="openImageModal('${p}')">`).join('') +
+                '</div>';
+        }
+
+        historyHtml += `
+        <div class="flex gap-2 py-2 border-b border-slate-100 last:border-0">
+            <div class="text-sm">${stage.icon}</div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-medium text-slate-700">${stage.text}</span>
+                    <span class="text-xs text-slate-400">${date}</span>
+                </div>
+                ${entry.message ? `<p class="text-xs text-slate-500 truncate">${escapeHtml(entry.message)}</p>` : ''}
+                ${photosHtml}
+            </div>
+        </div>`;
+    });
+
+    return `
+    <div class="mt-4 pt-4 border-t border-slate-200">
+        <p class="text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
+            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Historique
+        </p>
+        <div class="max-h-40 overflow-y-auto">
+            ${historyHtml}
+        </div>
+    </div>`;
+}
+
+// Formater une date relative
+function formatDateRelative(dateStr) {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'À l\'instant';
+    if (diffMins < 60) return `Il y a ${diffMins} min`;
+    if (diffHours < 24) return `Il y a ${diffHours}h`;
+    if (diffDays < 7) return `Il y a ${diffDays}j`;
+
+    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+
+// Sélectionner une étape (sans valider immédiatement)
+function selectEquipeStage(stage) {
+    const modal = document.getElementById('equipeStatusModal');
+    if (!modal) return;
+
+    // Mettre à jour la sélection visuelle
+    modal.querySelectorAll('.equipe-stage-btn').forEach(btn => {
+        if (btn.dataset.stage === stage) {
+            btn.classList.remove('bg-slate-100', 'text-slate-700');
+            btn.classList.add('bg-primary-600', 'text-white', 'ring-2', 'ring-primary-300');
+        } else {
+            btn.classList.remove('bg-primary-600', 'text-white', 'ring-2', 'ring-primary-300');
+            btn.classList.add('bg-slate-100', 'text-slate-700');
+        }
+    });
+
+    // Stocker la sélection
+    modal.dataset.selectedStage = stage;
+}
+
+// Gérer l'ajout de photos
+function handleEquipePhoto(event) {
+    const files = Array.from(event.target.files);
+    if (!files.length) return;
+
+    // Max 2 photos
+    const remaining = 2 - equipeUpdatePhotos.length;
+    const toAdd = files.slice(0, remaining);
+
+    toAdd.forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            equipeUpdatePhotos.push({
+                file: file,
+                dataUrl: e.target.result
+            });
+            renderEquipePhotosPreview();
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // Reset input pour permettre de resélectionner le même fichier
+    event.target.value = '';
+}
+
+// Afficher les previews de photos
+function renderEquipePhotosPreview() {
+    const container = document.getElementById('equipe-photos-preview');
+    const addBtn = document.getElementById('equipe-add-photo-btn');
+    if (!container) return;
+
+    let html = '';
+    equipeUpdatePhotos.forEach((photo, index) => {
+        html += `
+        <div class="relative w-16 h-16 rounded-xl overflow-hidden group">
+            <img src="${photo.dataUrl}" alt="Photo ${index + 1}" class="w-full h-full object-cover">
+            <button onclick="removeEquipePhoto(${index})"
+                class="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>`;
+    });
+
+    container.innerHTML = html;
+
+    // Masquer le bouton si 2 photos
+    if (addBtn) {
+        addBtn.style.display = equipeUpdatePhotos.length >= 2 ? 'none' : 'flex';
+    }
+}
+
+// Supprimer une photo
+function removeEquipePhoto(index) {
+    equipeUpdatePhotos.splice(index, 1);
+    renderEquipePhotosPreview();
+}
+
+// Soumettre la mise à jour
+async function submitEquipeUpdate() {
+    const modal = document.getElementById('equipeStatusModal');
+    if (!modal || !currentEquipeUpdateId) return;
+
+    const newStage = modal.dataset.selectedStage;
+    const message = document.getElementById('equipe-update-message')?.value.trim() || null;
+    const btn = document.getElementById('equipe-update-submit-btn');
+
+    if (!newStage) {
+        showToast('Sélectionnez une étape');
+        return;
+    }
+
+    // Désactiver le bouton pendant le traitement
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Envoi...';
+    }
+
+    try {
+        const chantier = getCurrentChantier();
+        const equipe = chantier?.equipes?.find(e => e.id === currentEquipeUpdateId);
+
+        if (!equipe) {
+            showToast('Équipe non trouvée');
+            return;
+        }
+
+        // Mettre à jour l'équipe
+        equipe.stage = newStage;
+        equipe.updatedAt = new Date().toISOString();
+        if (message) equipe.lastMessage = message;
+
+        // Ajouter à l'historique de l'équipe
+        if (!equipe.history) equipe.history = [];
+        const historyEntry = {
+            stage: newStage,
+            message: message,
+            date: new Date().toISOString(),
+            photos: equipeUpdatePhotos.map(p => p.dataUrl) // En démo, on stocke en base64
+        };
+        equipe.history.unshift(historyEntry);
+
+        // Recalculer la progression globale
+        updateGlobalProgressFromEquipes();
+
+        // Vérifier si on doit notifier l'équipe suivante (quand cette équipe termine)
+        if (newStage === 'livre') {
+            await notifyNextEquipe(chantier, equipe);
+        }
+
+        // Sauvegarder
+        if (window.SuiviTravauxAPI?.Chantiers) {
+            await SuiviTravauxAPI.Chantiers.update(chantier.id, {
+                equipes: chantier.equipes,
+                progress: chantier.progress
+            });
+        }
+        saveData(appData);
+
+        closeEquipeStatusModal();
+        renderEquipes();
+        renderChantierDetail();
+
+        // Message de confirmation adapté
+        const stageNames = { preparation: 'Préparation', en_cours: 'En cours', finitions: 'Finitions', livre: 'Terminé' };
+        showToast(`${stageNames[newStage]} ${equipeUpdatePhotos.length ? '+ ' + equipeUpdatePhotos.length + ' photo(s)' : ''}`);
+
+    } catch (error) {
+        console.error('Erreur mise à jour équipe:', error);
+        showToast('Erreur lors de la mise à jour');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Mettre à jour';
+        }
+    }
+}
+
+// Fermer le modal de statut équipe
+function closeEquipeStatusModal(event) {
+    if (!event || event.target === event.currentTarget) {
+        const modal = document.getElementById('equipeStatusModal');
+        if (modal) modal.remove();
+    }
+}
+
+// Mettre à jour l'étape d'une équipe (4 étapes: preparation, en_cours, finitions, livre)
+async function updateEquipeStage(equipeId, newStage) {
+    const chantier = getCurrentChantier();
+    const equipe = chantier?.equipes?.find(e => e.id === equipeId);
+
+    if (!equipe) return;
+
+    equipe.stage = newStage;
+    equipe.updatedAt = new Date().toISOString();
+
+    // Recalculer la progression globale
+    updateGlobalProgressFromEquipes();
+
+    // Sauvegarder
+    try {
+        if (window.SuiviTravauxAPI?.Chantiers) {
+            await SuiviTravauxAPI.Chantiers.update(chantier.id, {
+                equipes: chantier.equipes,
+                progress: chantier.progress
+            });
+        }
+        saveData(appData);
+    } catch (error) {
+        console.error('Erreur mise à jour équipe:', error);
+    }
+
+    closeEquipeStatusModal();
+    renderEquipes();
+    renderChantierDetail();
+    showToast('Étape mise à jour !');
+}
+
+// Supprimer une équipe
+async function deleteEquipe(equipeId) {
+    const chantier = getCurrentChantier();
+    if (!chantier?.equipes) return;
+
+    if (!confirm('Supprimer cette équipe ?')) return;
+
+    chantier.equipes = chantier.equipes.filter(e => e.id !== equipeId);
+
+    // Recalculer la progression globale
+    updateGlobalProgressFromEquipes();
+
+    // Sauvegarder
+    try {
+        if (window.SuiviTravauxAPI?.Chantiers) {
+            await SuiviTravauxAPI.Chantiers.update(chantier.id, {
+                equipes: chantier.equipes,
+                progress: chantier.progress
+            });
+        }
+        saveData(appData);
+    } catch (error) {
+        console.error('Erreur suppression équipe:', error);
+    }
+
+    closeEquipeStatusModal();
+    renderEquipes();
+    renderChantierDetail();
+    showToast('Équipe supprimée');
+}
+
+// Calculer la progression globale basée sur les équipes (X/Y terminées)
+function updateGlobalProgressFromEquipes() {
+    const chantier = getCurrentChantier();
+    const equipes = chantier?.equipes || [];
+
+    if (equipes.length === 0) return;
+
+    // Compter les équipes terminées (stage = 'livre')
+    const done = equipes.filter(e => e.stage === 'livre').length;
+    const total = equipes.length;
+
+    // Progression simple: pourcentage d'équipes terminées
+    chantier.progress = Math.round((done / total) * 100);
+
+    // Mettre à jour l'étape du chantier en fonction des équipes
+    if (done === total) {
+        chantier.stage = 'livre';
+        chantier.status = 'Terminé !';
+        chantier.statusColor = 'green';
+    } else if (done > 0 || equipes.some(e => e.stage === 'en_cours' || e.stage === 'finitions')) {
+        chantier.stage = 'en_cours';
+        chantier.status = 'En cours';
+        chantier.statusColor = 'blue';
+    } else {
+        chantier.stage = 'preparation';
+        chantier.status = 'Préparation';
+        chantier.statusColor = 'slate';
+    }
+}
+
+// =============================================
+// SYSTÈME DE NOTIFICATIONS "C'EST VOTRE TOUR"
+// =============================================
+
+// Notifier l'équipe suivante quand une équipe termine
+async function notifyNextEquipe(chantier, equipeTerminee) {
+    const equipes = chantier?.equipes || [];
+    if (equipes.length < 2) return; // Pas d'équipe suivante
+
+    // Trouver l'équipe suivante dans l'ordre
+    const currentIndex = equipes.findIndex(e => e.id === equipeTerminee.id);
+    if (currentIndex === -1 || currentIndex >= equipes.length - 1) return;
+
+    const nextEquipe = equipes[currentIndex + 1];
+
+    // Vérifier si déjà notifiée (anti-spam)
+    if (nextEquipe.notificationSent) {
+        console.log('Notification déjà envoyée à', nextEquipe.name);
+        return;
+    }
+
+    // Vérifier si l'équipe suivante est déjà terminée ou en cours
+    if (nextEquipe.stage === 'livre' || nextEquipe.stage === 'en_cours' || nextEquipe.stage === 'finitions') {
+        console.log('Équipe suivante déjà active ou terminée');
+        return;
+    }
+
+    // Préparer la notification
+    const notification = {
+        type: 'your_turn',
+        equipeId: nextEquipe.id,
+        equipeName: nextEquipe.name,
+        chantierName: chantier.name,
+        chantierId: chantier.id,
+        phone: nextEquipe.phone,
+        token: nextEquipe.token,
+        timestamp: new Date().toISOString()
+    };
+
+    // Envoyer la notification
+    const result = await sendNotification(notification);
+
+    if (result.success) {
+        // Marquer comme notifiée
+        nextEquipe.notificationSent = true;
+        nextEquipe.notificationDate = new Date().toISOString();
+        showToast(`${nextEquipe.name} a été notifié !`);
+    } else if (result.error) {
+        // Gérer l'erreur
+        handleNotificationError(nextEquipe, result.error);
+    }
+}
+
+// Envoyer une notification (SMS ou dans l'app)
+async function sendNotification(notification) {
+    console.log('📤 Envoi notification:', notification);
+
+    // Si pas de téléphone, on ne peut pas envoyer de SMS
+    if (!notification.phone) {
+        console.log('Pas de numéro - notification in-app uniquement');
+        return { success: true, method: 'app_only' };
+    }
+
+    // Valider le numéro de téléphone
+    const phoneValidation = validatePhoneNumber(notification.phone);
+    if (!phoneValidation.valid) {
+        return { success: false, error: phoneValidation.error };
+    }
+
+    // Construire le lien équipe
+    const equipeLink = getEquipeLink(notification.token);
+
+    // Message SMS
+    const smsMessage = `🏗️ ${notification.chantierName}\n\nC'est votre tour ! L'équipe précédente a terminé.\n\n👉 ${equipeLink}`;
+
+    // En production, appeler le service SMS (Supabase Edge Function / Twilio)
+    if (window.SuiviTravauxAPI?.SMS) {
+        try {
+            await SuiviTravauxAPI.SMS.send({
+                to: phoneValidation.formatted,
+                message: smsMessage,
+                metadata: {
+                    type: 'your_turn',
+                    chantier_id: notification.chantierId,
+                    equipe_id: notification.equipeId
+                }
+            });
+            return { success: true, method: 'sms' };
+        } catch (error) {
+            console.error('Erreur envoi SMS:', error);
+            return { success: false, error: { code: 'SMS_FAILED', message: error.message } };
+        }
+    }
+
+    // Mode démo : simuler l'envoi
+    console.log('📱 [DEMO] SMS qui serait envoyé à', phoneValidation.formatted);
+    console.log('📝 Message:', smsMessage);
+
+    // Afficher un aperçu du SMS en mode démo
+    showSMSPreview(notification, smsMessage);
+
+    return { success: true, method: 'demo' };
+}
+
+// Valider et formater un numéro de téléphone
+function validatePhoneNumber(phone) {
+    if (!phone) return { valid: false, error: { code: 'MISSING_PHONE', message: 'Numéro manquant' } };
+
+    // Nettoyer le numéro
+    let cleaned = phone.replace(/[\s\-\.]/g, '');
+
+    // Vérifier la longueur minimale
+    if (cleaned.length < 6) {
+        return { valid: false, error: { code: 'INVALID_LENGTH', message: 'Numéro trop court' } };
+    }
+
+    // Vérifier que c'est bien des chiffres (avec éventuellement un +)
+    if (!/^\+?\d+$/.test(cleaned)) {
+        return { valid: false, error: { code: 'INVALID_FORMAT', message: 'Format invalide' } };
+    }
+
+    // Formater pour l'international
+    let formatted = cleaned;
+    if (cleaned.startsWith('0')) {
+        // Détecter le préfixe selon le format
+        if (cleaned.startsWith('0692') || cleaned.startsWith('0693')) {
+            formatted = '+262' + cleaned.slice(1); // Réunion
+        } else if (cleaned.startsWith('0694') || cleaned.startsWith('0696') || cleaned.startsWith('0697')) {
+            formatted = '+596' + cleaned.slice(1); // Martinique/Guadeloupe
+        } else {
+            formatted = '+33' + cleaned.slice(1); // France métro
+        }
+    } else if (!cleaned.startsWith('+')) {
+        formatted = '+' + cleaned;
+    }
+
+    return { valid: true, formatted: formatted };
+}
+
+// Gérer les erreurs de notification
+function handleNotificationError(equipe, error) {
+    console.error('Erreur notification pour', equipe.name, ':', error);
+
+    // Stocker l'erreur pour affichage
+    if (!equipe.notificationErrors) equipe.notificationErrors = [];
+    equipe.notificationErrors.push({
+        date: new Date().toISOString(),
+        code: error.code,
+        message: error.message
+    });
+
+    // Messages d'erreur selon le code
+    const errorMessages = {
+        'MISSING_PHONE': `Pas de numéro pour ${equipe.name}`,
+        'INVALID_LENGTH': `Numéro invalide pour ${equipe.name}`,
+        'INVALID_FORMAT': `Format de numéro incorrect pour ${equipe.name}`,
+        'SMS_FAILED': `Échec envoi SMS à ${equipe.name}`,
+        'RATE_LIMIT': `Trop de SMS envoyés, réessayez plus tard`
+    };
+
+    const message = errorMessages[error.code] || `Erreur notification: ${error.message}`;
+    showToast(message);
+
+    // Proposer de corriger le numéro si invalide
+    if (error.code === 'INVALID_LENGTH' || error.code === 'INVALID_FORMAT' || error.code === 'MISSING_PHONE') {
+        setTimeout(() => {
+            if (confirm(`Voulez-vous corriger le numéro de ${equipe.name} ?`)) {
+                openEditEquipePhoneModal(equipe.id);
+            }
+        }, 500);
+    }
+}
+
+// Modal pour corriger le numéro d'une équipe
+function openEditEquipePhoneModal(equipeId) {
+    const chantier = getCurrentChantier();
+    const equipe = chantier?.equipes?.find(e => e.id === equipeId);
+    if (!equipe) return;
+
+    const currentPhone = equipe.phone || '';
+    const newPhone = prompt(`Numéro de téléphone pour ${equipe.name}:`, currentPhone);
+
+    if (newPhone !== null && newPhone !== currentPhone) {
+        const validation = validatePhoneNumber(newPhone);
+        if (validation.valid) {
+            equipe.phone = newPhone;
+            equipe.notificationSent = false; // Permettre un nouvel envoi
+            saveData(appData);
+            renderEquipes();
+            showToast('Numéro mis à jour');
+
+            // Proposer de renvoyer la notification
+            if (confirm('Voulez-vous envoyer la notification maintenant ?')) {
+                sendNotification({
+                    type: 'your_turn',
+                    equipeId: equipe.id,
+                    equipeName: equipe.name,
+                    chantierName: chantier.name,
+                    chantierId: chantier.id,
+                    phone: newPhone,
+                    token: equipe.token,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        } else {
+            showToast(validation.error.message);
+        }
+    }
+}
+
+// Afficher un aperçu du SMS en mode démo
+function showSMSPreview(notification, message) {
+    const previewHtml = `
+    <div id="smsPreviewModal" class="modal-overlay active" onclick="closeSMSPreview(event)" style="z-index: 10002;">
+        <div class="bg-white rounded-2xl w-full max-w-sm mx-4 p-6" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-800">📱 Notification envoyée</h3>
+                <button onclick="closeSMSPreview()" class="p-1 text-slate-400 hover:text-slate-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
+                <p class="text-sm text-green-800 font-medium mb-2">SMS à ${escapeHtml(notification.equipeName)}</p>
+                <p class="text-xs text-green-600">${notification.phone || 'Pas de numéro'}</p>
+            </div>
+            <div class="bg-slate-100 rounded-xl p-4 mb-4">
+                <p class="text-sm text-slate-700 whitespace-pre-line">${escapeHtml(message)}</p>
+            </div>
+            <p class="text-xs text-slate-400 text-center">Mode démo - En production, un vrai SMS serait envoyé</p>
+        </div>
+    </div>`;
+
+    document.body.insertAdjacentHTML('beforeend', previewHtml);
+}
+
+function closeSMSPreview(event) {
+    if (!event || event.target === event.currentTarget) {
+        const modal = document.getElementById('smsPreviewModal');
+        if (modal) modal.remove();
+    }
+}
+
+// Renvoyer manuellement une notification
+async function resendNotification(equipeId) {
+    const chantier = getCurrentChantier();
+    const equipe = chantier?.equipes?.find(e => e.id === equipeId);
+    if (!equipe) return;
+
+    // Réinitialiser le flag
+    equipe.notificationSent = false;
+
+    // Créer la notification
+    const notification = {
+        type: 'manual_reminder',
+        equipeId: equipe.id,
+        equipeName: equipe.name,
+        chantierName: chantier.name,
+        chantierId: chantier.id,
+        phone: equipe.phone,
+        token: equipe.token,
+        timestamp: new Date().toISOString()
+    };
+
+    const result = await sendNotification(notification);
+
+    if (result.success) {
+        equipe.notificationSent = true;
+        equipe.notificationDate = new Date().toISOString();
+        saveData(appData);
+    }
+}
+
 // Initialize dark mode from localStorage
 document.addEventListener('DOMContentLoaded', function() {
     if (localStorage.getItem('darkMode') === 'true') {
@@ -5760,6 +6901,8 @@ document.addEventListener('DOMContentLoaded', function() {
 // Bouton de réinitialisation (pour les tests) - accessible via console: resetData()
 console.log('🏗️ SuiviTravaux.app - Pour réinitialiser les données: resetData()');
 console.log('📊 Données actuelles:', appData.chantiers.length, 'chantiers');
+console.log('👥 Mode multi-équipes disponible');
+console.log('📱 Système de notifications SMS prêt');
 </script>
 </body>
 </html>
