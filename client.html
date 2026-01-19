@@ -351,7 +351,11 @@
 
             try {
                 // Initialiser Supabase
-                SuiviTravauxAPI.init();
+                if (!SuiviTravauxAPI || !SuiviTravauxAPI.init()) {
+                    console.error('Supabase non disponible');
+                    showError('Erreur de connexion au serveur');
+                    return;
+                }
 
                 // Charger les données du chantier
                 await loadChantier();
@@ -384,18 +388,32 @@
             }
         }
 
+        // Rate limiting pour éviter les appels multiples
+        let lastRefresh = 0;
+        const REFRESH_COOLDOWN = 5000; // 5 secondes minimum entre chaque refresh
+
+        async function refreshIfNeeded() {
+            const now = Date.now();
+            if (now - lastRefresh < REFRESH_COOLDOWN) {
+                console.log('⏳ Refresh ignoré (cooldown)');
+                return;
+            }
+            lastRefresh = now;
+            console.log('🔄 Actualisation automatique...');
+            await loadChantier();
+        }
+
         // Rafraîchir automatiquement quand le client revient sur la page
         document.addEventListener('visibilitychange', async () => {
             if (document.visibilityState === 'visible' && currentToken) {
-                console.log('🔄 Actualisation automatique...');
-                await loadChantier();
+                await refreshIfNeeded();
             }
         });
 
-        // Rafraîchir au focus (mobile)
+        // Rafraîchir au focus (mobile) - délai de 500ms pour éviter double refresh
         window.addEventListener('focus', async () => {
             if (currentToken) {
-                setTimeout(() => loadChantier(), 500);
+                setTimeout(() => refreshIfNeeded(), 500);
             }
         });
 
@@ -610,10 +628,15 @@
             document.getElementById('main-content').classList.remove('hidden');
         }
 
-        function showError() {
+        function showError(message = null) {
             document.getElementById('loading-state').classList.add('hidden');
             document.getElementById('main-content').classList.add('hidden');
             document.getElementById('error-state').classList.remove('hidden');
+            // Afficher un message personnalisé si fourni
+            if (message) {
+                const errorText = document.querySelector('#error-state p');
+                if (errorText) errorText.textContent = message;
+            }
         }
 
         // Confetti

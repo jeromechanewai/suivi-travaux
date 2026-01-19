@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SuiviTravaux.app - Coordination Chantiers</title>
+    <meta name="description" content="Coordonnez vos chantiers multi-équipes en 30 secondes">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe',
+                            300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6',
+                            600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        * { font-family: system-ui, -apple-system, sans-serif; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+
+        /* Status badges */
+        .status-done { background: #dcfce7; color: #166534; }
+        .status-active { background: #dbeafe; color: #1e40af; }
+        .status-ready { background: #d1fae5; color: #065f46; }
+        .status-waiting { background: #fef3c7; color: #92400e; }
+
+        /* Smooth transitions */
+        .card { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .card:active { transform: scale(0.98); }
+
+        /* Progress bar animation */
+        .progress-bar { transition: width 0.3s ease; }
+
+        /* Drag and drop */
+        .dragging { opacity: 0.5; }
+        .drag-over { border-color: #3b82f6; background: #eff6ff; }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: #1f2937; color: white; padding: 12px 24px;
+            border-radius: 12px; z-index: 9999; opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .toast.show { opacity: 1; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            display: none; align-items: center; justify-content: center;
+            z-index: 1000; padding: 16px;
+        }
+        .modal-overlay.active { display: flex; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen pb-20">
+
+<!-- Toast -->
+<div id="toast" class="toast">Message</div>
+
+<!-- =============================================
+     ÉCRAN: AUTHENTIFICATION
+============================================= -->
+<div id="screen-auth" class="screen">
+    <div class="min-h-screen flex items-center justify-center p-4" style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);">
+        <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl">
+            <div class="p-8">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <span class="text-3xl">🏗️</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-800">SuiviTravaux<span class="text-primary-600">.app</span></h2>
+                    <p class="text-slate-500 text-sm mt-1">Coordination de chantiers multi-équipes</p>
+                </div>
+
+                <!-- Bénéfices -->
+                <div id="auth-benefits" class="mb-6 space-y-2">
+                    <div class="flex items-center gap-3 p-2 bg-slate-50 rounded-lg">
+                        <span class="text-xl">👥</span>
+                        <p class="text-sm text-slate-600">Coordonnez plusieurs équipes sur un projet</p>
+                    </div>
+                    <div class="flex items-center gap-3 p-2 bg-slate-50 rounded-lg">
+                        <span class="text-xl">🔔</span>
+                        <p class="text-sm text-slate-600">Notifications "C'est votre tour"</p>
+                    </div>
+                    <div class="flex items-center gap-3 p-2 bg-slate-50 rounded-lg">
+                        <span class="text-xl">📱</span>
+                        <p class="text-sm text-slate-600">Lien client unique - pas d'app à installer</p>
+                    </div>
+                </div>
+
+                <!-- Login Form -->
+                <div id="auth-login-form">
+                    <form onsubmit="event.preventDefault(); handleLogin();" autocomplete="on" class="space-y-4">
+                        <div>
+                            <label for="login-email" class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                            <input type="email" id="login-email" name="email" autocomplete="email" placeholder="votre@email.com"
+                                class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                        <div>
+                            <label for="login-password" class="block text-sm font-medium text-slate-700 mb-1">Mot de passe</label>
+                            <input type="password" id="login-password" name="password" autocomplete="current-password" placeholder="••••••••"
+                                class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                        <p id="auth-error" class="text-red-500 text-sm hidden"></p>
+                        <button type="submit" id="login-btn" class="w-full bg-primary-600 text-white py-3 rounded-xl font-semibold hover:bg-primary-700">
+                            Se connecter
+                        </button>
+                    </form>
+                    <p class="text-center text-sm text-slate-500 mt-4">
+                        Pas encore de compte ? <button type="button" onclick="showSignupForm()" class="text-primary-600 font-medium">S'inscrire</button>
+                    </p>
+                </div>
+
+                <!-- Signup Form -->
+                <div id="auth-signup-form" class="hidden">
+                    <form onsubmit="event.preventDefault(); handleSignup();" autocomplete="on" class="space-y-4">
+                        <div>
+                            <label for="signup-name" class="block text-sm font-medium text-slate-700 mb-1">Votre nom</label>
+                            <input type="text" id="signup-name" name="name" autocomplete="name" placeholder="Jean Dupont"
+                                class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                        <div>
+                            <label for="signup-phone" class="block text-sm font-medium text-slate-700 mb-1">Téléphone <span class="text-red-500">*</span></label>
+                            <div class="flex gap-2">
+                                <select id="signup-phone-prefix" name="phone-prefix" class="border border-slate-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-slate-50">
+                                    <option value="+262">🇷🇪 +262</option>
+                                    <option value="+33">🇫🇷 +33</option>
+                                    <option value="+596">🇲🇶 +596</option>
+                                    <option value="+594">🇬🇫 +594</option>
+                                </select>
+                                <input type="tel" id="signup-phone" name="phone" autocomplete="tel-national" placeholder="0692 XX XX XX"
+                                    class="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="signup-email" class="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                            <input type="email" id="signup-email" name="email" autocomplete="email" placeholder="votre@email.com"
+                                class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                        <div>
+                            <label for="signup-password" class="block text-sm font-medium text-slate-700 mb-1">Mot de passe</label>
+                            <input type="password" id="signup-password" name="password" autocomplete="new-password" placeholder="Min. 6 caractères"
+                                class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                        <p id="signup-error" class="text-red-500 text-sm hidden"></p>
+                        <p id="signup-success" class="text-green-600 text-sm hidden bg-green-50 p-3 rounded-xl"></p>
+                        <button type="submit" id="signup-btn" class="w-full bg-primary-600 text-white py-3 rounded-xl font-semibold hover:bg-primary-700">
+                            Démarrer mon essai gratuit
+                        </button>
+                        <p class="text-xs text-center text-slate-400">14 jours d'essai gratuit • Projets illimités</p>
+                    </form>
+                    <p class="text-center text-sm text-slate-500 mt-4">
+                        Déjà un compte ? <button type="button" onclick="showLoginForm()" class="text-primary-600 font-medium">Se connecter</button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- =============================================
+     HEADER
+============================================= -->
+<header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+    <div class="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <span class="text-2xl">🏗️</span>
+            <span class="font-bold text-slate-800">SuiviTravaux</span>
+            <span class="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full">v2</span>
+        </div>
+        <button onclick="showProfileModal()" class="w-9 h-9 bg-primary-100 rounded-full flex items-center justify-center">
+            <span id="header-initials" class="text-sm font-bold text-primary-600">--</span>
+        </button>
+    </div>
+</header>
+
+<!-- =============================================
+     ÉCRAN: LISTE DES PROJETS
+============================================= -->
+<div id="screen-projects" class="screen active">
+    <div class="max-w-lg mx-auto px-4 py-4">
+
+        <!-- Titre + bouton nouveau -->
+        <div class="flex items-center justify-between mb-4">
+            <h1 class="text-xl font-bold text-slate-800">Mes Projets</h1>
+            <button onclick="showNewProjectModal()" class="bg-primary-600 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2">
+                <span>+</span> Nouveau
+            </button>
+        </div>
+
+        <!-- Toggle: Mes projets / Mes interventions -->
+        <div class="flex bg-slate-100 rounded-xl p-1 mb-4">
+            <button id="tab-coordinator" onclick="setProjectTab('coordinator')" class="flex-1 py-2 text-sm font-medium rounded-lg bg-white text-slate-800 shadow-sm">
+                Mes Projets
+            </button>
+            <button id="tab-team" onclick="setProjectTab('team')" class="flex-1 py-2 text-sm font-medium rounded-lg text-slate-500">
+                Mes Interventions
+            </button>
+        </div>
+
+        <!-- Liste des projets -->
+        <div id="projects-list" class="space-y-3">
+            <!-- Généré dynamiquement -->
+        </div>
+
+        <!-- État vide -->
+        <div id="projects-empty" class="hidden text-center py-12">
+            <div class="text-5xl mb-4">📋</div>
+            <p class="text-slate-600 mb-4">Aucun projet pour l'instant</p>
+            <button onclick="showNewProjectModal()" class="bg-primary-600 text-white px-6 py-3 rounded-xl font-medium">
+                Créer mon premier projet
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- =============================================
+     ÉCRAN: DÉTAIL PROJET (Vue Coordinateur)
+============================================= -->
+<div id="screen-project-detail" class="screen">
+    <div class="max-w-lg mx-auto px-4 py-4">
+
+        <!-- Back + titre -->
+        <div class="flex items-center gap-3 mb-4">
+            <button onclick="showScreen('projects')" class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <div class="flex-1 min-w-0">
+                <h1 id="project-name" class="text-lg font-bold text-slate-800 truncate">Nom du projet</h1>
+                <p id="project-client" class="text-sm text-slate-500">Client: -</p>
+            </div>
+            <button onclick="showProjectMenu()" class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 text-slate-600" fill="currentColor" viewBox="0 0 20 20"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/></svg>
+            </button>
+        </div>
+
+        <!-- Progression globale -->
+        <div class="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-4 text-white mb-4">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm opacity-90">Progression globale</span>
+                <span id="project-progress-text" class="text-2xl font-bold">0%</span>
+            </div>
+            <div class="h-2 bg-white/30 rounded-full overflow-hidden">
+                <div id="project-progress-bar" class="h-full bg-white rounded-full progress-bar" style="width: 0%"></div>
+            </div>
+            <p id="project-steps-text" class="text-sm mt-2 opacity-75">0/0 étapes terminées</p>
+        </div>
+
+        <!-- Lien client -->
+        <div class="bg-slate-100 rounded-xl p-3 mb-4 flex items-center gap-2">
+            <span class="text-lg">🔗</span>
+            <input id="project-share-link" type="text" readonly class="flex-1 bg-transparent text-sm text-slate-600 truncate">
+            <button onclick="copyProjectLink()" class="bg-primary-600 text-white px-3 py-1.5 rounded-lg text-sm">Copier</button>
+        </div>
+
+        <!-- Liste des interventions -->
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="font-semibold text-slate-800">Étapes du projet</h2>
+            <button onclick="showAddInterventionModal()" class="text-primary-600 text-sm font-medium">+ Ajouter</button>
+        </div>
+
+        <div id="interventions-list" class="space-y-2">
+            <!-- Généré dynamiquement -->
+        </div>
+
+    </div>
+</div>
+
+<!-- =============================================
+     ÉCRAN: MON INTERVENTION (Vue Équipe)
+============================================= -->
+<div id="screen-my-intervention" class="screen">
+    <div class="max-w-lg mx-auto px-4 py-4">
+
+        <!-- Back + titre -->
+        <div class="flex items-center gap-3 mb-4">
+            <button onclick="showScreen('projects')" class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <div class="flex-1 min-w-0">
+                <p id="intervention-project-name" class="text-sm text-slate-500">Projet</p>
+                <h1 id="intervention-name" class="text-lg font-bold text-slate-800">Mon intervention</h1>
+            </div>
+        </div>
+
+        <!-- Statut -->
+        <div id="intervention-status-card" class="bg-green-50 border-2 border-green-200 rounded-2xl p-4 mb-4">
+            <div class="flex items-center gap-3">
+                <span id="intervention-status-emoji" class="text-3xl">🟢</span>
+                <div>
+                    <p id="intervention-status-text" class="font-semibold text-green-800">C'est votre tour</p>
+                    <p id="intervention-status-info" class="text-sm text-green-600"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progression -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 mb-4">
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-sm text-slate-600">Votre progression</span>
+                <span id="my-progress-text" class="text-xl font-bold text-slate-800">0%</span>
+            </div>
+            <input type="range" id="my-progress-slider" min="0" max="100" value="0"
+                class="w-full h-2 bg-slate-200 rounded-full appearance-none cursor-pointer"
+                oninput="updateMyProgressDisplay(this.value)">
+
+            <div class="mt-4">
+                <textarea id="my-progress-message" placeholder="Commentaire (optionnel)..."
+                    class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm resize-none" rows="2"></textarea>
+            </div>
+
+            <div class="flex gap-2 mt-3">
+                <button onclick="addPhotoToIntervention()" class="flex-1 bg-slate-100 text-slate-700 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2">
+                    <span>📷</span> Photo
+                </button>
+                <button onclick="updateMyProgress()" class="flex-1 bg-primary-600 text-white py-2.5 rounded-xl text-sm font-medium">
+                    Enregistrer
+                </button>
+            </div>
+        </div>
+
+        <!-- Bouton Terminé -->
+        <button id="btn-mark-done" onclick="markInterventionDone()" class="w-full bg-green-600 text-white py-4 rounded-2xl font-semibold text-lg flex items-center justify-center gap-2 mb-4">
+            <span>✅</span> J'ai terminé
+        </button>
+
+        <!-- Vue d'ensemble du projet -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+            <h3 class="font-semibold text-slate-800 mb-3">Où en est le projet</h3>
+            <div id="project-overview-list" class="space-y-2">
+                <!-- Généré dynamiquement -->
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- =============================================
+     MODAL: NOUVEAU PROJET
+============================================= -->
+<div id="modal-new-project" class="modal-overlay" onclick="if(event.target===this)hideModal('modal-new-project')">
+    <div class="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+            <h2 class="text-lg font-bold text-slate-800">Nouveau projet</h2>
+            <button onclick="hideModal('modal-new-project')" class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <div class="p-4 space-y-4">
+            <!-- Templates -->
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Type de projet</label>
+                <div id="templates-list" class="grid grid-cols-2 gap-2">
+                    <button onclick="selectTemplate(null)" class="template-btn selected p-3 bg-slate-100 rounded-xl text-left border-2 border-primary-500">
+                        <span class="text-lg">📝</span>
+                        <p class="text-sm font-medium mt-1">Personnalisé</p>
+                    </button>
+                    <!-- Templates ajoutés dynamiquement -->
+                </div>
+            </div>
+
+            <!-- Infos projet -->
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Nom du projet *</label>
+                <input type="text" id="new-project-name" placeholder="Ex: Rénovation cuisine Martin"
+                    class="w-full border border-slate-200 rounded-xl px-4 py-3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Nom du client *</label>
+                <input type="text" id="new-project-client" placeholder="Ex: M. Martin"
+                    class="w-full border border-slate-200 rounded-xl px-4 py-3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Téléphone client</label>
+                <input type="tel" id="new-project-phone" placeholder="06 12 34 56 78"
+                    class="w-full border border-slate-200 rounded-xl px-4 py-3">
+            </div>
+
+            <button onclick="createProject()" class="w-full bg-primary-600 text-white py-3 rounded-xl font-semibold">
+                Créer le projet
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- =============================================
+     MODAL: AJOUTER INTERVENTION
+============================================= -->
+<div id="modal-add-intervention" class="modal-overlay" onclick="if(event.target===this)hideModal('modal-add-intervention')">
+    <div class="bg-white rounded-2xl w-full max-w-md">
+        <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+            <h2 class="text-lg font-bold text-slate-800">Ajouter une étape</h2>
+            <button onclick="hideModal('modal-add-intervention')" class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <div class="p-4 space-y-4">
+            <!-- Suggestions rapides -->
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">Suggestions</label>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="setInterventionName('Maçonnerie')" class="px-3 py-1.5 bg-slate-100 rounded-full text-sm">🧱 Maçonnerie</button>
+                    <button onclick="setInterventionName('Électricité')" class="px-3 py-1.5 bg-slate-100 rounded-full text-sm">⚡ Électricité</button>
+                    <button onclick="setInterventionName('Plomberie')" class="px-3 py-1.5 bg-slate-100 rounded-full text-sm">🔧 Plomberie</button>
+                    <button onclick="setInterventionName('Carrelage')" class="px-3 py-1.5 bg-slate-100 rounded-full text-sm">🔲 Carrelage</button>
+                    <button onclick="setInterventionName('Peinture')" class="px-3 py-1.5 bg-slate-100 rounded-full text-sm">🎨 Peinture</button>
+                    <button onclick="setInterventionName('Menuiserie')" class="px-3 py-1.5 bg-slate-100 rounded-full text-sm">🪵 Menuiserie</button>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Nom de l'étape *</label>
+                <input type="text" id="new-intervention-name" placeholder="Ex: Installation électrique"
+                    class="w-full border border-slate-200 rounded-xl px-4 py-3">
+            </div>
+
+            <button onclick="addIntervention()" class="w-full bg-primary-600 text-white py-3 rounded-xl font-semibold">
+                Ajouter l'étape
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- =============================================
+     MODAL: PROFIL
+============================================= -->
+<div id="modal-profile" class="modal-overlay" onclick="if(event.target===this)hideModal('modal-profile')">
+    <div class="bg-white rounded-2xl w-full max-w-md">
+        <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+            <h2 class="text-lg font-bold text-slate-800">Mon profil</h2>
+            <button onclick="hideModal('modal-profile')" class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <div class="p-4">
+            <div class="text-center mb-4">
+                <div class="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <span id="profile-initials" class="text-2xl font-bold text-primary-600">--</span>
+                </div>
+                <p id="profile-name" class="font-semibold text-slate-800">-</p>
+                <p id="profile-email" class="text-sm text-slate-500">-</p>
+            </div>
+
+            <button onclick="logout()" class="w-full bg-red-50 text-red-600 py-3 rounded-xl font-medium">
+                Se déconnecter
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- =============================================
+     ÉCRAN: NOTIFICATIONS
+============================================= -->
+<div id="screen-notifications" class="screen">
+    <div class="max-w-lg mx-auto px-4 py-4">
+
+        <div class="flex items-center justify-between mb-4">
+            <h1 class="text-xl font-bold text-slate-800">Notifications</h1>
+            <button onclick="markAllNotificationsRead()" class="text-primary-600 text-sm font-medium">Tout marquer lu</button>
+        </div>
+
+        <div id="notifications-list" class="space-y-2">
+            <!-- Généré dynamiquement -->
+        </div>
+
+        <div id="notifications-empty" class="hidden text-center py-12">
+            <div class="text-5xl mb-4">🔔</div>
+            <p class="text-slate-600">Aucune notification</p>
+            <p class="text-sm text-slate-400 mt-2">Vous serez notifié quand c'est votre tour</p>
+        </div>
+
+    </div>
+</div>
+
+<!-- =============================================
+     MODAL: PHOTO INTERVENTION
+============================================= -->
+<div id="modal-photo" class="modal-overlay" onclick="if(event.target===this)hideModal('modal-photo')">
+    <div class="bg-white rounded-2xl w-full max-w-md">
+        <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+            <h2 class="text-lg font-bold text-slate-800">Ajouter une photo</h2>
+            <button onclick="hideModal('modal-photo')" class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <div class="p-4 space-y-4">
+            <!-- Preview photo -->
+            <div id="photo-preview-container" class="hidden">
+                <img id="photo-preview" class="w-full h-48 object-cover rounded-xl" alt="Preview">
+            </div>
+
+            <!-- Boutons de capture -->
+            <div class="flex gap-2">
+                <label class="flex-1 bg-primary-600 text-white py-3 rounded-xl font-medium flex items-center justify-center gap-2 cursor-pointer">
+                    <span>📷</span> Prendre photo
+                    <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoCapture(this)">
+                </label>
+                <label class="flex-1 bg-slate-100 text-slate-700 py-3 rounded-xl font-medium flex items-center justify-center gap-2 cursor-pointer">
+                    <span>🖼️</span> Galerie
+                    <input type="file" accept="image/*" class="hidden" onchange="handlePhotoCapture(this)">
+                </label>
+            </div>
+
+            <!-- Upload status -->
+            <div id="photo-upload-status" class="hidden text-center py-2">
+                <div class="inline-flex items-center gap-2 text-sm text-slate-600">
+                    <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Envoi en cours...
+                </div>
+            </div>
+
+            <button id="btn-confirm-photo" onclick="confirmPhoto()" disabled class="w-full bg-green-600 text-white py-3 rounded-xl font-semibold disabled:opacity-50">
+                Ajouter cette photo
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- =============================================
+     NAVIGATION BOTTOM
+============================================= -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50">
+    <div class="max-w-lg mx-auto flex">
+        <button onclick="showScreen('projects')" data-nav="projects" class="nav-btn flex-1 py-3 flex flex-col items-center text-primary-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            <span class="text-xs mt-1">Projets</span>
+        </button>
+        <button onclick="showNotificationsScreen()" data-nav="notifications" class="nav-btn flex-1 py-3 flex flex-col items-center text-slate-400 relative">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            <span id="notif-badge" class="hidden absolute top-1 right-1/4 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">0</span>
+            <span class="text-xs mt-1">Notifs</span>
+        </button>
+        <button onclick="showScreen('projects');setProjectTab('team')" data-nav="team" class="nav-btn flex-1 py-3 flex flex-col items-center text-slate-400">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            <span class="text-xs mt-1">Mon travail</span>
+        </button>
+    </div>
+</nav>
+
+<!-- =============================================
+     JAVASCRIPT
+============================================= -->
+<script>
+// =============================================
+// ÉTAT GLOBAL
+// =============================================
+let currentUser = null;
+let currentProject = null;
+let currentIntervention = null;
+let projectsData = [];
+let selectedTemplate = null;
+let currentTab = 'coordinator';
+
+// =============================================
+// INITIALISATION
+// =============================================
+document.addEventListener('DOMContentLoaded', async () => {
+    // Initialiser Supabase
+    if (window.SuiviTravauxAPI) {
+        SuiviTravauxAPI.init();
+    }
+
+    // Vérifier l'authentification
+    await checkAuth();
+
+    // Charger les templates
+    loadTemplates();
+});
+
+async function checkAuth() {
+    try {
+        if (!window.SuiviTravauxAPI) {
+            // Afficher l'écran d'auth
+            showAuthScreen();
+            return;
+        }
+
+        currentUser = await SuiviTravauxAPI.Auth.getCurrentUser();
+
+        if (!currentUser) {
+            // Afficher l'écran d'authentification
+            showAuthScreen();
+            return;
+        }
+
+        // Utilisateur connecté - charger le profil
+        const profile = await SuiviTravauxAPI.Auth.getProfile();
+        if (profile) {
+            document.getElementById('header-initials').textContent = profile.initials || '--';
+            document.getElementById('profile-initials').textContent = profile.initials || '--';
+            document.getElementById('profile-name').textContent = profile.name || '-';
+            document.getElementById('profile-email').textContent = currentUser.email || '-';
+        }
+
+        // Afficher l'interface principale
+        showMainInterface();
+
+        // Charger les projets
+        await loadProjects();
+
+    } catch (error) {
+        console.error('Erreur auth:', error);
+        showAuthScreen();
+    }
+}
+
+// =============================================
+// AUTHENTIFICATION
+// =============================================
+function showAuthScreen() {
+    // Cacher tous les écrans et la nav
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-auth').classList.add('active');
+    document.querySelector('header').style.display = 'none';
+    document.querySelector('nav').style.display = 'none';
+    document.body.classList.remove('pb-20');
+}
+
+function showMainInterface() {
+    // Cacher l'écran auth et montrer l'interface principale
+    document.getElementById('screen-auth').classList.remove('active');
+    document.querySelector('header').style.display = '';
+    document.querySelector('nav').style.display = '';
+    document.body.classList.add('pb-20');
+    showScreen('projects');
+}
+
+function showLoginForm() {
+    document.getElementById('auth-login-form').classList.remove('hidden');
+    document.getElementById('auth-signup-form').classList.add('hidden');
+    document.getElementById('auth-error').classList.add('hidden');
+    document.getElementById('auth-benefits').classList.remove('hidden');
+}
+
+function showSignupForm() {
+    document.getElementById('auth-login-form').classList.add('hidden');
+    document.getElementById('auth-signup-form').classList.remove('hidden');
+    document.getElementById('signup-error').classList.add('hidden');
+    document.getElementById('auth-benefits').classList.add('hidden');
+}
+
+async function handleLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errorEl = document.getElementById('auth-error');
+    const btn = document.getElementById('login-btn');
+
+    if (!email || !password) {
+        errorEl.textContent = 'Remplissez tous les champs';
+        errorEl.classList.remove('hidden');
+        return;
+    }
+
+    if (!window.SuiviTravauxAPI) {
+        errorEl.textContent = 'Erreur de connexion au serveur. Rechargez la page.';
+        errorEl.classList.remove('hidden');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Connexion...';
+
+    try {
+        await SuiviTravauxAPI.Auth.signIn(email, password);
+        currentUser = await SuiviTravauxAPI.Auth.getCurrentUser();
+
+        showToast('Connexion réussie !');
+
+        // Charger le profil
+        const profile = await SuiviTravauxAPI.Auth.getProfile();
+        if (profile) {
+            document.getElementById('header-initials').textContent = profile.initials || '--';
+            document.getElementById('profile-initials').textContent = profile.initials || '--';
+            document.getElementById('profile-name').textContent = profile.name || '-';
+            document.getElementById('profile-email').textContent = currentUser.email || '-';
+        }
+
+        // Afficher l'interface principale
+        showMainInterface();
+
+        // Charger les projets
+        await loadProjects();
+
+    } catch (error) {
+        errorEl.textContent = error.message || 'Erreur de connexion';
+        errorEl.classList.remove('hidden');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Se connecter';
+    }
+}
+
+async function handleSignup() {
+    const name = document.getElementById('signup-name').value.trim();
+    const phonePrefix = document.getElementById('signup-phone-prefix').value;
+    const phoneNumber = document.getElementById('signup-phone').value.trim().replace(/\s/g, '');
+    const email = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-password').value;
+    const errorEl = document.getElementById('signup-error');
+    const successEl = document.getElementById('signup-success');
+    const btn = document.getElementById('signup-btn');
+
+    // Validation
+    if (!phoneNumber) {
+        errorEl.textContent = 'Le numéro de téléphone est obligatoire';
+        errorEl.classList.remove('hidden');
+        return;
+    }
+
+    const cleanPhone = phoneNumber.replace(/^0/, '');
+    const fullPhone = phonePrefix + cleanPhone;
+
+    if (cleanPhone.length < 6 || !/^\d+$/.test(cleanPhone)) {
+        errorEl.textContent = 'Numéro de téléphone invalide';
+        errorEl.classList.remove('hidden');
+        return;
+    }
+
+    if (!name || !email || !password) {
+        errorEl.textContent = 'Remplissez tous les champs';
+        errorEl.classList.remove('hidden');
+        return;
+    }
+
+    if (password.length < 6) {
+        errorEl.textContent = 'Le mot de passe doit faire au moins 6 caractères';
+        errorEl.classList.remove('hidden');
+        return;
+    }
+
+    if (!window.SuiviTravauxAPI) {
+        errorEl.textContent = 'Erreur de connexion au serveur. Rechargez la page.';
+        errorEl.classList.remove('hidden');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Création...';
+
+    try {
+        await SuiviTravauxAPI.Auth.signUp(email, password, name, fullPhone);
+        currentUser = await SuiviTravauxAPI.Auth.getCurrentUser();
+
+        if (currentUser) {
+            showToast('Bienvenue ! Essai gratuit activé');
+
+            // Charger le profil
+            const profile = await SuiviTravauxAPI.Auth.getProfile();
+            if (profile) {
+                document.getElementById('header-initials').textContent = profile.initials || '--';
+                document.getElementById('profile-initials').textContent = profile.initials || '--';
+                document.getElementById('profile-name').textContent = profile.name || '-';
+                document.getElementById('profile-email').textContent = currentUser.email || '-';
+            }
+
+            // Afficher l'interface principale
+            showMainInterface();
+
+            // Charger les projets
+            await loadProjects();
+        } else {
+            // Email de confirmation envoyé
+            errorEl.classList.add('hidden');
+            successEl.innerHTML = '✅ <strong>Email envoyé !</strong> Vérifiez votre boîte mail et cliquez sur le lien de confirmation.';
+            successEl.classList.remove('hidden');
+            btn.textContent = 'Email envoyé !';
+            return;
+        }
+    } catch (error) {
+        errorEl.textContent = error.message || "Erreur lors de l'inscription";
+        errorEl.classList.remove('hidden');
+        successEl.classList.add('hidden');
+    } finally {
+        btn.disabled = false;
+        if (btn.textContent === 'Création...') {
+            btn.textContent = 'Démarrer mon essai gratuit';
+        }
+    }
+}
+
+// =============================================
+// PROJETS
+// =============================================
+async function loadProjects() {
+    try {
+        projectsData = await SuiviTravauxAPI.Projects.getAll();
+        renderProjects();
+    } catch (error) {
+        console.error('Erreur chargement projets:', error);
+        showToast('Erreur chargement');
+    }
+}
+
+function renderProjects() {
+    const list = document.getElementById('projects-list');
+    const empty = document.getElementById('projects-empty');
+
+    // Filtrer selon le tab
+    let projects = projectsData;
+    if (currentTab === 'team') {
+        // Afficher seulement les projets où j'ai des interventions
+        projects = projectsData.filter(p =>
+            p.interventions?.some(i => i.enterprise_id)
+        );
+    } else {
+        // Projets que je coordonne
+        projects = projectsData.filter(p => p.coordinator_id === currentUser?.id);
+    }
+
+    if (projects.length === 0) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+    }
+
+    empty.classList.add('hidden');
+
+    list.innerHTML = projects.map(p => {
+        const interventions = p.interventions || [];
+        const done = interventions.filter(i => i.status === 'done').length;
+        const total = interventions.length;
+        const progress = total > 0 ? Math.round((done / total) * 100) : 0;
+
+        return `
+            <div onclick="openProject('${p.id}')" class="card bg-white rounded-xl p-4 shadow-sm border border-slate-200 cursor-pointer">
+                <div class="flex items-start justify-between mb-2">
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-semibold text-slate-800 truncate">${escapeHtml(p.name)}</h3>
+                        <p class="text-sm text-slate-500">Client: ${escapeHtml(p.client_name)}</p>
+                    </div>
+                    <span class="text-lg font-bold text-primary-600">${progress}%</span>
+                </div>
+                <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-primary-500 rounded-full progress-bar" style="width: ${progress}%"></div>
+                </div>
+                <p class="text-xs text-slate-400 mt-2">${done}/${total} étapes terminées</p>
+            </div>
+        `;
+    }).join('');
+}
+
+function setProjectTab(tab) {
+    currentTab = tab;
+
+    document.getElementById('tab-coordinator').className = tab === 'coordinator'
+        ? 'flex-1 py-2 text-sm font-medium rounded-lg bg-white text-slate-800 shadow-sm'
+        : 'flex-1 py-2 text-sm font-medium rounded-lg text-slate-500';
+
+    document.getElementById('tab-team').className = tab === 'team'
+        ? 'flex-1 py-2 text-sm font-medium rounded-lg bg-white text-slate-800 shadow-sm'
+        : 'flex-1 py-2 text-sm font-medium rounded-lg text-slate-500';
+
+    renderProjects();
+}
+
+async function openProject(projectId) {
+    try {
+        currentProject = await SuiviTravauxAPI.Projects.getById(projectId);
+
+        if (!currentProject) {
+            showToast('Projet non trouvé');
+            return;
+        }
+
+        // Vérifier si je suis coordinateur ou équipe
+        if (currentProject.coordinator_id === currentUser?.id) {
+            renderProjectDetail();
+            showScreen('project-detail');
+        } else {
+            // Trouver mon intervention
+            const profile = await SuiviTravauxAPI.Auth.getProfile();
+            const myIntervention = currentProject.interventions?.find(
+                i => i.enterprise_id === profile?.enterprise_id
+            );
+
+            if (myIntervention) {
+                currentIntervention = myIntervention;
+                renderMyIntervention();
+                showScreen('my-intervention');
+            } else {
+                showToast('Accès non autorisé');
+            }
+        }
+
+    } catch (error) {
+        console.error('Erreur ouverture projet:', error);
+        showToast('Erreur');
+    }
+}
+
+function renderProjectDetail() {
+    if (!currentProject) return;
+
+    const interventions = currentProject.interventions || [];
+    const done = interventions.filter(i => i.status === 'done').length;
+    const total = interventions.length;
+    const progress = total > 0 ? Math.round((done / total) * 100) : 0;
+
+    document.getElementById('project-name').textContent = currentProject.name;
+    document.getElementById('project-client').textContent = 'Client: ' + currentProject.client_name;
+    document.getElementById('project-progress-text').textContent = progress + '%';
+    document.getElementById('project-progress-bar').style.width = progress + '%';
+    document.getElementById('project-steps-text').textContent = `${done}/${total} étapes terminées`;
+
+    // Lien de partage
+    const shareUrl = SuiviTravauxAPI.Projects.getShareUrl(currentProject.share_token);
+    document.getElementById('project-share-link').value = shareUrl;
+
+    // Liste des interventions
+    renderInterventions();
+}
+
+function renderInterventions() {
+    if (!currentProject) return;
+
+    const list = document.getElementById('interventions-list');
+    const interventions = currentProject.interventions || [];
+
+    list.innerHTML = interventions.map((intervention, index) => {
+        const statusInfo = getInterventionStatusDisplay(intervention, interventions);
+
+        return `
+            <div class="bg-white rounded-xl p-3 border border-slate-200 flex items-center gap-3">
+                <span class="text-xl">${statusInfo.emoji}</span>
+                <div class="flex-1 min-w-0">
+                    <p class="font-medium text-slate-800">${escapeHtml(intervention.name)}</p>
+                    <p class="text-xs text-slate-500">${statusInfo.text}</p>
+                    ${intervention.enterprise?.name ? `<p class="text-xs text-primary-600">${escapeHtml(intervention.enterprise.name)}</p>` : '<p class="text-xs text-amber-600">Non assigné</p>'}
+                </div>
+                <div class="text-right">
+                    <p class="font-semibold text-slate-800">${intervention.progress || 0}%</p>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// =============================================
+// MON INTERVENTION (VUE ÉQUIPE)
+// =============================================
+function renderMyIntervention() {
+    if (!currentIntervention || !currentProject) return;
+
+    const interventions = currentProject.interventions || [];
+    const statusInfo = getInterventionStatusDisplay(currentIntervention, interventions);
+
+    document.getElementById('intervention-project-name').textContent = currentProject.name;
+    document.getElementById('intervention-name').textContent = currentIntervention.name;
+    document.getElementById('intervention-status-emoji').textContent = statusInfo.emoji;
+    document.getElementById('intervention-status-text').textContent = statusInfo.text;
+    document.getElementById('intervention-status-info').textContent = statusInfo.info || '';
+
+    // Couleur du status card
+    const statusCard = document.getElementById('intervention-status-card');
+    if (statusInfo.code === 'ready') {
+        statusCard.className = 'bg-green-50 border-2 border-green-200 rounded-2xl p-4 mb-4';
+    } else if (statusInfo.code === 'active') {
+        statusCard.className = 'bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 mb-4';
+    } else if (statusInfo.code === 'waiting') {
+        statusCard.className = 'bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 mb-4';
+    } else {
+        statusCard.className = 'bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 mb-4';
+    }
+
+    // Progression
+    document.getElementById('my-progress-text').textContent = (currentIntervention.progress || 0) + '%';
+    document.getElementById('my-progress-slider').value = currentIntervention.progress || 0;
+
+    // Bouton terminé
+    const btnDone = document.getElementById('btn-mark-done');
+    if (currentIntervention.status === 'done') {
+        btnDone.classList.add('hidden');
+    } else {
+        btnDone.classList.remove('hidden');
+    }
+
+    // Vue d'ensemble du projet
+    renderProjectOverview();
+}
+
+function renderProjectOverview() {
+    if (!currentProject) return;
+
+    const list = document.getElementById('project-overview-list');
+    const interventions = currentProject.interventions || [];
+
+    list.innerHTML = interventions.map(i => {
+        let emoji = '⚪';
+        let textClass = 'text-slate-500';
+
+        if (i.status === 'done') {
+            emoji = '✅';
+            textClass = 'text-green-600';
+        } else if (i.progress > 0) {
+            emoji = '🔵';
+            textClass = 'text-blue-600';
+        }
+
+        const isMe = i.id === currentIntervention?.id;
+
+        return `
+            <div class="flex items-center gap-2 py-1 ${isMe ? 'bg-primary-50 -mx-2 px-2 rounded-lg' : ''}">
+                <span>${emoji}</span>
+                <span class="flex-1 text-sm ${isMe ? 'font-semibold text-primary-700' : textClass}">${escapeHtml(i.name)}${isMe ? ' (vous)' : ''}</span>
+                <span class="text-xs ${textClass}">${i.progress || 0}%</span>
+            </div>
+        `;
+    }).join('');
+}
+
+function updateMyProgressDisplay(value) {
+    document.getElementById('my-progress-text').textContent = value + '%';
+}
+
+async function updateMyProgress() {
+    if (!currentIntervention) return;
+
+    const progress = parseInt(document.getElementById('my-progress-slider').value);
+    const message = document.getElementById('my-progress-message').value.trim();
+
+    try {
+        await SuiviTravauxAPI.Interventions.updateProgress(
+            currentIntervention.id,
+            progress,
+            message || null
+        );
+
+        // Recharger
+        currentProject = await SuiviTravauxAPI.Projects.getById(currentProject.id);
+        currentIntervention = currentProject.interventions.find(i => i.id === currentIntervention.id);
+
+        renderMyIntervention();
+        document.getElementById('my-progress-message').value = '';
+        showToast('Progression enregistrée');
+
+    } catch (error) {
+        console.error('Erreur update:', error);
+        showToast('Erreur');
+    }
+}
+
+async function markInterventionDone() {
+    if (!currentIntervention) return;
+
+    const message = document.getElementById('my-progress-message').value.trim();
+
+    try {
+        await SuiviTravauxAPI.Interventions.markDone(
+            currentIntervention.id,
+            message || 'Intervention terminée'
+        );
+
+        showToast('✅ Intervention terminée !');
+
+        // Retour à la liste
+        await loadProjects();
+        showScreen('projects');
+
+    } catch (error) {
+        console.error('Erreur:', error);
+        showToast('Erreur');
+    }
+}
+
+// =============================================
+// CRÉATION PROJET
+// =============================================
+async function loadTemplates() {
+    try {
+        const templates = await SuiviTravauxAPI.Projects.getTemplates();
+        const container = document.getElementById('templates-list');
+
+        let html = `
+            <button onclick="selectTemplate(null)" class="template-btn p-3 bg-slate-100 rounded-xl text-left border-2 border-primary-500">
+                <span class="text-lg">📝</span>
+                <p class="text-sm font-medium mt-1">Personnalisé</p>
+            </button>
+        `;
+
+        if (templates) {
+            templates.forEach(t => {
+                const emoji = t.name.includes('Cuisine') ? '🍳' :
+                              t.name.includes('Salle') ? '🚿' :
+                              t.name.includes('Extension') ? '🏠' : '📋';
+                html += `
+                    <button onclick="selectTemplate('${t.id}')" class="template-btn p-3 bg-slate-100 rounded-xl text-left border-2 border-transparent">
+                        <span class="text-lg">${emoji}</span>
+                        <p class="text-sm font-medium mt-1">${escapeHtml(t.name)}</p>
+                    </button>
+                `;
+            });
+        }
+
+        container.innerHTML = html;
+
+    } catch (error) {
+        console.error('Erreur templates:', error);
+    }
+}
+
+function selectTemplate(templateId) {
+    selectedTemplate = templateId;
+
+    document.querySelectorAll('.template-btn').forEach(btn => {
+        btn.classList.remove('border-primary-500');
+        btn.classList.add('border-transparent');
+    });
+
+    event.currentTarget.classList.remove('border-transparent');
+    event.currentTarget.classList.add('border-primary-500');
+}
+
+async function createProject() {
+    const name = document.getElementById('new-project-name').value.trim();
+    const clientName = document.getElementById('new-project-client').value.trim();
+    const clientPhone = document.getElementById('new-project-phone').value.trim();
+
+    if (!name || !clientName) {
+        showToast('Remplissez les champs obligatoires');
+        return;
+    }
+
+    try {
+        let project;
+
+        if (selectedTemplate) {
+            project = await SuiviTravauxAPI.Projects.createFromTemplate(selectedTemplate, {
+                name,
+                client_name: clientName,
+                client_phone: clientPhone || null
+            });
+        } else {
+            project = await SuiviTravauxAPI.Projects.create({
+                name,
+                client_name: clientName,
+                client_phone: clientPhone || null
+            });
+        }
+
+        hideModal('modal-new-project');
+
+        // Reset form
+        document.getElementById('new-project-name').value = '';
+        document.getElementById('new-project-client').value = '';
+        document.getElementById('new-project-phone').value = '';
+        selectedTemplate = null;
+
+        showToast('Projet créé !');
+
+        // Ouvrir le projet
+        await loadProjects();
+        openProject(project.id);
+
+    } catch (error) {
+        console.error('Erreur création:', error);
+        showToast('Erreur création');
+    }
+}
+
+// =============================================
+// AJOUT INTERVENTION
+// =============================================
+function setInterventionName(name) {
+    document.getElementById('new-intervention-name').value = name;
+}
+
+async function addIntervention() {
+    if (!currentProject) return;
+
+    const name = document.getElementById('new-intervention-name').value.trim();
+
+    if (!name) {
+        showToast('Entrez un nom');
+        return;
+    }
+
+    try {
+        await SuiviTravauxAPI.Interventions.create(currentProject.id, { name });
+
+        hideModal('modal-add-intervention');
+        document.getElementById('new-intervention-name').value = '';
+
+        // Recharger le projet
+        currentProject = await SuiviTravauxAPI.Projects.getById(currentProject.id);
+        renderProjectDetail();
+
+        showToast('Étape ajoutée');
+
+    } catch (error) {
+        console.error('Erreur:', error);
+        showToast('Erreur');
+    }
+}
+
+// =============================================
+// UTILITAIRES
+// =============================================
+function getInterventionStatusDisplay(intervention, allInterventions) {
+    if (intervention.status === 'done') {
+        return { code: 'done', emoji: '✅', text: 'Terminé' };
+    }
+
+    if (intervention.progress > 0) {
+        return { code: 'active', emoji: '🔵', text: 'En cours' };
+    }
+
+    // Vérifier les précédentes
+    const sorted = [...allInterventions].sort((a, b) => a.order_index - b.order_index);
+    const myIndex = sorted.findIndex(i => i.id === intervention.id);
+
+    if (myIndex === 0) {
+        return { code: 'ready', emoji: '🟢', text: "C'est votre tour" };
+    }
+
+    const previousOnes = sorted.slice(0, myIndex);
+    const allPreviousDone = previousOnes.every(i => i.status === 'done');
+
+    if (allPreviousDone) {
+        return { code: 'ready', emoji: '🟢', text: "C'est votre tour" };
+    }
+
+    // Trouver l'intervention en cours
+    const activeOne = previousOnes.find(i => i.status !== 'done');
+    if (activeOne) {
+        return {
+            code: 'waiting',
+            emoji: '🟡',
+            text: 'En attente',
+            info: `${activeOne.name} en cours (${activeOne.progress || 0}%)`
+        };
+    }
+
+    return { code: 'waiting', emoji: '⚪', text: 'À venir' };
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + screenId)?.classList.add('active');
+
+    // Update nav
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('text-primary-600');
+        btn.classList.add('text-slate-400');
+    });
+
+    const activeNav = document.querySelector(`[data-nav="${screenId}"]`);
+    if (activeNav) {
+        activeNav.classList.remove('text-slate-400');
+        activeNav.classList.add('text-primary-600');
+    }
+}
+
+function showModal(modalId) {
+    document.getElementById(modalId)?.classList.add('active');
+}
+
+function hideModal(modalId) {
+    document.getElementById(modalId)?.classList.remove('active');
+}
+
+function showNewProjectModal() {
+    showModal('modal-new-project');
+}
+
+function showAddInterventionModal() {
+    showModal('modal-add-intervention');
+}
+
+function showProfileModal() {
+    showModal('modal-profile');
+}
+
+function copyProjectLink() {
+    const input = document.getElementById('project-share-link');
+    navigator.clipboard.writeText(input.value).then(() => {
+        showToast('Lien copié !');
+    });
+}
+
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+async function logout() {
+    try {
+        await SuiviTravauxAPI.Auth.signOut();
+        currentUser = null;
+        hideModal('modal-profile');
+        showAuthScreen();
+        showToast('Déconnecté');
+    } catch (error) {
+        console.error('Erreur déconnexion:', error);
+    }
+}
+
+function showProjectMenu() {
+    // TODO: Menu contextuel
+    showToast('Menu projet (à venir)');
+}
+
+// =============================================
+// NOTIFICATIONS
+// =============================================
+let notificationsData = [];
+let notificationSubscription = null;
+
+async function loadNotifications() {
+    try {
+        notificationsData = await SuiviTravauxAPI.Notifications.getAll();
+        updateNotifBadge();
+    } catch (error) {
+        console.error('Erreur chargement notifications:', error);
+    }
+}
+
+async function showNotificationsScreen() {
+    showScreen('notifications');
+    await loadNotifications();
+    renderNotifications();
+}
+
+function renderNotifications() {
+    const list = document.getElementById('notifications-list');
+    const empty = document.getElementById('notifications-empty');
+
+    if (!notificationsData || notificationsData.length === 0) {
+        list.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+    }
+
+    empty.classList.add('hidden');
+
+    list.innerHTML = notificationsData.map(notif => {
+        const isUnread = !notif.read;
+        const date = new Date(notif.created_at);
+        const timeAgo = getTimeAgo(date);
+
+        // Emoji selon le type
+        const typeEmoji = {
+            'turn': '🟢',
+            'done': '✅',
+            'update': '🔵',
+            'invite': '📩',
+            'reminder': '⏰'
+        }[notif.type] || '🔔';
+
+        return `
+            <div onclick="handleNotificationClick('${notif.id}', '${notif.project_id || ''}', '${notif.intervention_id || ''}')"
+                 class="card bg-white rounded-xl p-4 border ${isUnread ? 'border-primary-200 bg-primary-50/50' : 'border-slate-200'} cursor-pointer">
+                <div class="flex gap-3">
+                    <span class="text-2xl">${typeEmoji}</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-medium text-slate-800 ${isUnread ? 'font-semibold' : ''}">${escapeHtml(notif.title)}</p>
+                        ${notif.message ? `<p class="text-sm text-slate-500 mt-1">${escapeHtml(notif.message)}</p>` : ''}
+                        <p class="text-xs text-slate-400 mt-2">${timeAgo}</p>
+                    </div>
+                    ${isUnread ? '<span class="w-2 h-2 bg-primary-500 rounded-full flex-shrink-0 mt-2"></span>' : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function getTimeAgo(date) {
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return "À l'instant";
+    if (diffMins < 60) return `Il y a ${diffMins}min`;
+    if (diffHours < 24) return `Il y a ${diffHours}h`;
+    if (diffDays < 7) return `Il y a ${diffDays}j`;
+
+    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+
+async function handleNotificationClick(notifId, projectId, interventionId) {
+    // Marquer comme lu
+    try {
+        await SuiviTravauxAPI.Notifications.markAsRead(notifId);
+
+        // Mettre à jour localement
+        const notif = notificationsData.find(n => n.id === notifId);
+        if (notif) notif.read = true;
+        updateNotifBadge();
+        renderNotifications();
+
+        // Naviguer vers le projet/intervention
+        if (projectId) {
+            await openProject(projectId);
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+    }
+}
+
+async function markAllNotificationsRead() {
+    try {
+        await SuiviTravauxAPI.Notifications.markAllAsRead();
+        notificationsData.forEach(n => n.read = true);
+        updateNotifBadge();
+        renderNotifications();
+        showToast('Toutes les notifications marquées comme lues');
+    } catch (error) {
+        console.error('Erreur:', error);
+        showToast('Erreur');
+    }
+}
+
+function updateNotifBadge() {
+    const unreadCount = notificationsData.filter(n => !n.read).length;
+    const badge = document.getElementById('notif-badge');
+
+    if (unreadCount > 0) {
+        badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+}
+
+function setupNotificationSubscription() {
+    if (notificationSubscription) return;
+
+    notificationSubscription = SuiviTravauxAPI.Notifications.subscribe((newNotif) => {
+        // Ajouter la nouvelle notification au début
+        notificationsData.unshift(newNotif);
+        updateNotifBadge();
+
+        // Notification visuelle
+        showToast(`🔔 ${newNotif.title}`);
+
+        // Vibration si disponible
+        if ('vibrate' in navigator) {
+            navigator.vibrate(200);
+        }
+    });
+}
+
+// =============================================
+// PHOTOS
+// =============================================
+let pendingPhotoFile = null;
+let pendingPhotoUrl = null;
+
+function addPhotoToIntervention() {
+    pendingPhotoFile = null;
+    pendingPhotoUrl = null;
+    document.getElementById('photo-preview-container').classList.add('hidden');
+    document.getElementById('btn-confirm-photo').disabled = true;
+    document.getElementById('photo-upload-status').classList.add('hidden');
+    showModal('modal-photo');
+}
+
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+const MAX_PHOTO_SIZE = 10 * 1024 * 1024; // 10MB
+
+function handlePhotoCapture(input) {
+    if (!input.files || !input.files[0]) return;
+
+    const file = input.files[0];
+
+    // Vérifier le type MIME
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        showToast('Format non supporté (JPG, PNG, WebP)');
+        input.value = '';
+        return;
+    }
+
+    // Vérifier la taille (max 10MB)
+    if (file.size > MAX_PHOTO_SIZE) {
+        showToast('Photo trop volumineuse (max 10MB)');
+        input.value = '';
+        return;
+    }
+
+    pendingPhotoFile = file;
+
+    // Utiliser URL.createObjectURL pour éviter la fuite mémoire
+    const objectUrl = URL.createObjectURL(file);
+    document.getElementById('photo-preview').src = objectUrl;
+    document.getElementById('photo-preview-container').classList.remove('hidden');
+    document.getElementById('btn-confirm-photo').disabled = false;
+
+    // Reset input
+    input.value = '';
+}
+
+// Nettoyer les object URLs quand on ferme la modal
+function cleanupPhotoPreview() {
+    const preview = document.getElementById('photo-preview');
+    if (preview.src && preview.src.startsWith('blob:')) {
+        URL.revokeObjectURL(preview.src);
+    }
+}
+
+async function confirmPhoto() {
+    if (!pendingPhotoFile || !currentIntervention) return;
+
+    const uploadStatus = document.getElementById('photo-upload-status');
+    const confirmBtn = document.getElementById('btn-confirm-photo');
+
+    uploadStatus.classList.remove('hidden');
+    confirmBtn.disabled = true;
+
+    try {
+        // Upload vers Supabase Storage
+        const fileName = `intervention_${currentIntervention.id}_${Date.now()}.jpg`;
+        const { url } = await SuiviTravauxAPI.Storage.uploadPhoto(pendingPhotoFile, fileName);
+
+        pendingPhotoUrl = url;
+
+        // Créer une mise à jour avec la photo
+        await SuiviTravauxAPI.InterventionUpdates.create(currentIntervention.id, {
+            title: 'Photo ajoutée',
+            progress: currentIntervention.progress,
+            photo_url: url
+        });
+
+        // Nettoyer et fermer
+        cleanupPhotoPreview();
+        hideModal('modal-photo');
+        showToast('📷 Photo ajoutée !');
+
+        // Reset
+        pendingPhotoFile = null;
+        pendingPhotoUrl = null;
+
+    } catch (error) {
+        console.error('Erreur upload:', error);
+        showToast('Erreur envoi photo');
+    } finally {
+        uploadStatus.classList.add('hidden');
+        confirmBtn.disabled = false;
+    }
+}
+
+// Override hideModal pour nettoyer les photos
+const originalHideModal = hideModal;
+hideModal = function(modalId) {
+    if (modalId === 'modal-photo') {
+        cleanupPhotoPreview();
+    }
+    originalHideModal(modalId);
+};
+
+// =============================================
+// INITIALISATION NOTIFICATIONS
+// =============================================
+// Charger les notifications au démarrage après l'auth
+const originalCheckAuth = checkAuth;
+checkAuth = async function() {
+    await originalCheckAuth();
+    if (currentUser) {
+        await loadNotifications();
+        setupNotificationSubscription();
+    }
+};
+</script>
+
+</body>
+</html>

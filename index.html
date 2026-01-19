@@ -2,11 +2,48 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="0;url=preview.html">
-    <title>SuiviTravaux.app - Redirection</title>
-    <script>window.location.href = 'preview.html';</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuiviTravaux.app - Chargement</title>
+    <meta name="theme-color" content="#2563eb">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <style>
+        * { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
+        body { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); }
+        .loader {
+            text-align: center; color: white;
+        }
+        .logo { font-size: 4rem; margin-bottom: 1rem; animation: bounce 1s infinite; }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .title { font-size: 1.5rem; font-weight: bold; margin-bottom: 0.5rem; }
+        .subtitle { opacity: 0.8; font-size: 0.9rem; }
+        .spinner {
+            width: 40px; height: 40px; margin: 1.5rem auto;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
 </head>
 <body>
-    <p>Redirection vers <a href="preview.html">SuiviTravaux.app</a>...</p>
+    <div class="loader">
+        <div class="logo">🏗️</div>
+        <div class="title">SuiviTravaux.app</div>
+        <div class="subtitle">Coordination de chantiers</div>
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Rediriger directement vers l'application principale
+        // L'authentification est gérée dans app-v2.html
+        window.location.href = 'app-v2.html';
+    });
+    </script>
 </body>
 </html>
