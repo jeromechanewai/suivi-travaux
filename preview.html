@@ -2894,9 +2894,42 @@ function startRealtimeSync(userId) {
 
 // Rafraîchir quand l'utilisateur revient sur l'onglet/app
 document.addEventListener('visibilitychange', async () => {
-    if (document.visibilityState === 'visible' && APP_MODE === 'supabase' && currentUser && dataLoaded) {
+    if (document.visibilityState === 'visible' && dataLoaded) {
         console.log('👁️ Retour sur l\'app');
-        await syncData(false);
+
+        // D'abord recharger depuis localStorage (pour récupérer les modifs de equipe.html)
+        const freshData = loadData();
+        if (freshData?.chantiers) {
+            // Fusionner les équipes fraîches du localStorage
+            for (const freshCh of freshData.chantiers) {
+                const currentCh = appData.chantiers.find(c => String(c.id) === String(freshCh.id));
+                if (currentCh && freshCh.equipes?.length > 0) {
+                    // Comparer chaque équipe par date de mise à jour
+                    for (const freshEq of freshCh.equipes) {
+                        const currentIdx = (currentCh.equipes || []).findIndex(e => e.token === freshEq.token);
+                        if (currentIdx !== -1) {
+                            const freshDate = new Date(freshEq.updatedAt || 0);
+                            const currentDate = new Date(currentCh.equipes[currentIdx].updatedAt || 0);
+                            if (freshDate > currentDate) {
+                                console.log('🔀 Équipe mise à jour depuis localStorage:', freshEq.name, freshEq.stage);
+                                currentCh.equipes[currentIdx] = freshEq;
+                            }
+                        } else if (!currentCh.equipes) {
+                            currentCh.equipes = [freshEq];
+                        } else {
+                            currentCh.equipes.push(freshEq);
+                        }
+                    }
+                }
+            }
+            // Rafraîchir l'affichage immédiatement
+            renderAll();
+        }
+
+        // Puis sync avec Supabase si connecté
+        if (APP_MODE === 'supabase' && currentUser) {
+            await syncData(false);
+        }
     }
 });
 
