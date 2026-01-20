@@ -2844,6 +2844,19 @@ async function syncData(showNotification = false) {
         // Sauvegarder les données fusionnées dans localStorage
         saveData(appData);
 
+        // Sync les équipes modifiées vers Supabase (pour que client.html les voie)
+        for (const ch of appData.chantiers) {
+            if (ch.equipes?.length > 0) {
+                try {
+                    await SuiviTravauxAPI.Chantiers.update(ch.id, {
+                        equipes: ch.equipes
+                    });
+                } catch (e) {
+                    // Ignorer les erreurs de sync individuelle
+                }
+            }
+        }
+
         // Restaurer la sélection du chantier courant
         if (currentId) {
             appData.currentChantier = currentId;
