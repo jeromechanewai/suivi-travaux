@@ -237,27 +237,41 @@ document.addEventListener('DOMContentLoaded', async () => {
 // =============================================
 async function loadIntervention() {
     // Mode démo : charger depuis localStorage si pas de Supabase
-    if (!window.SuiviTravauxAPI) {
-        loadDemoData();
-        return;
-    }
+    // Charger depuis Supabase si disponible, sinon localStorage
+    if (window.SuiviTravauxAPI?.Chantiers) {
+        try {
+            console.log('Chargement depuis Supabase...');
+            const chantiers = await SuiviTravauxAPI.Chantiers.getAll();
 
-    try {
-        // Charger l'intervention par son token
-        const data = await SuiviTravauxAPI.Interventions.getByToken(token);
+            // Chercher l'équipe avec ce token
+            for (const chantier of chantiers) {
+                const equipes = chantier.equipes || [];
+                const equipe = equipes.find(e => e.token === token);
 
-        if (!data) {
-            showError('Cette intervention n\'existe pas ou le lien a expiré.');
-            return;
+                if (equipe) {
+                    console.log('✅ Équipe trouvée dans Supabase:', equipe.name);
+                    chantierData = chantier;
+                    interventionData = {
+                        id: equipe.id,
+                        name: equipe.name,
+                        entreprise: equipe.entreprise,
+                        stage: equipe.stage || 'preparation',
+                        history: equipe.history || [],
+                        token: equipe.token
+                    };
+                    renderPage();
+                    return;
+                }
+            }
+
+            // Pas trouvé dans Supabase, essayer localStorage
+            console.log('Équipe non trouvée dans Supabase, fallback localStorage');
+            loadDemoData();
+        } catch (error) {
+            console.error('Erreur chargement Supabase:', error);
+            loadDemoData();
         }
-
-        interventionData = data.intervention;
-        chantierData = data.chantier;
-
-        renderPage();
-    } catch (error) {
-        console.error('Erreur chargement:', error);
-        // Fallback mode démo
+    } else {
         loadDemoData();
     }
 }
