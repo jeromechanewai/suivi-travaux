@@ -522,8 +522,9 @@ async function submitUpdate() {
         // Sauvegarder dans le localStorage principal (partagé avec preview.html)
         saveToMainStorage();
 
-        // Note: La sync Supabase se fait via preview.html quand le coordinateur ouvre l'app
-        // (equipe.html n'est pas authentifié, donc ne peut pas écrire directement dans Supabase)
+        // Tenter sync directe vers Supabase (pour que client.html voie immédiatement)
+        // Si ça échoue (RLS), pas grave - le localStorage est déjà sauvegardé
+        tryDirectSupabaseSync();
 
         // Reset formulaire
         document.getElementById('update-message').value = '';
@@ -582,6 +583,32 @@ function saveToMainStorage() {
         }
     } catch (e) {
         console.error('Erreur sauvegarde:', e);
+    }
+}
+
+// Tenter une sync directe vers Supabase (sans auth)
+async function tryDirectSupabaseSync() {
+    if (!chantierData?.id) return;
+
+    try {
+        const mainData = localStorage.getItem('suivitravaux_data');
+        if (!mainData) return;
+
+        const appData = JSON.parse(mainData);
+        const chantier = appData.chantiers?.find(c => String(c.id) === String(chantierData.id));
+
+        if (!chantier?.equipes) return;
+
+        // Utiliser le client Supabase directement (sans auth)
+        if (window.SuiviTravauxAPI?.Chantiers) {
+            // Essayer via l'API (nécessite peut-être auth)
+            await window.SuiviTravauxAPI.Chantiers.update(chantierData.id, {
+                equipes: chantier.equipes
+            });
+            console.log('✅ Sync Supabase directe réussie');
+        }
+    } catch (e) {
+        console.log('⚠️ Sync directe ignorée:', e.message);
     }
 }
 
