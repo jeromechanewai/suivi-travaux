@@ -356,11 +356,25 @@ const Updates = {
 const ClientAPI = {
     // Récupérer un chantier par token (marque aussi comme vu)
     async getChantierByToken(token) {
+        // Récupérer le chantier avec ses équipes
         const { data, error } = await supabaseClient
-            .rpc('get_chantier_by_token', { token });
+            .from('chantiers')
+            .select('*, equipes')
+            .eq('share_token', token)
+            .single();
 
         if (error) throw error;
-        return data?.[0] || null;
+        if (!data) return null;
+
+        // Marquer comme vu (en arrière-plan)
+        supabaseClient
+            .from('chantiers')
+            .update({ client_viewed: true })
+            .eq('share_token', token)
+            .then(() => console.log('Client view marked'))
+            .catch(() => {});
+
+        return data;
     },
 
     // Récupérer l'historique par token
