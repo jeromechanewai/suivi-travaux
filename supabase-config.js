@@ -356,15 +356,21 @@ const Updates = {
 const ClientAPI = {
     // Récupérer un chantier par token (marque aussi comme vu)
     async getChantierByToken(token) {
-        // Récupérer le chantier avec ses équipes
+        // Récupérer le chantier avec ses équipes et le nom de l'artisan
         const { data, error } = await supabaseClient
             .from('chantiers')
-            .select('*, equipes')
+            .select('*, equipes, artisan:artisans(name, phone)')
             .eq('share_token', token)
             .single();
 
         if (error) throw error;
         if (!data) return null;
+
+        // Ajouter artisan_name et artisan_phone au niveau racine pour compatibilité
+        if (data.artisan) {
+            data.artisan_name = data.artisan.name;
+            data.artisan_phone = data.artisan.phone || data.artisan_phone;
+        }
 
         // Marquer comme vu (en arrière-plan)
         supabaseClient
