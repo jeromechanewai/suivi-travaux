@@ -2796,6 +2796,14 @@ async function syncData(showNotification = false) {
     try {
         console.log('🔄 Synchronisation des données...');
 
+        // Sauvegarder les équipes locales avant sync (modifiées par equipe.html)
+        const localEquipes = {};
+        for (const ch of appData.chantiers || []) {
+            if (ch.equipes?.length > 0) {
+                localEquipes[ch.id] = ch.equipes;
+            }
+        }
+
         // Charger chantiers et archives en parallèle
         const [chantiers, archived] = await Promise.all([
             SuiviTravauxAPI.Chantiers.getAll(),
@@ -2807,6 +2815,34 @@ async function syncData(showNotification = false) {
 
         appData.chantiers = chantiers.map(mapChantierFromSupabase);
         appData.archivedChantiers = archived.map(mapChantierFromSupabase);
+
+        // Fusionner les équipes locales (plus récentes) avec celles de Supabase
+        for (const ch of appData.chantiers) {
+            const localEq = localEquipes[ch.id];
+            if (localEq && localEq.length > 0) {
+                // Fusionner : prendre l'équipe la plus récente pour chaque token
+                const merged = [...(ch.equipes || [])];
+                for (const local of localEq) {
+                    const idx = merged.findIndex(e => e.token === local.token);
+                    if (idx !== -1) {
+                        // Comparer les dates de mise à jour
+                        const localDate = new Date(local.updatedAt || 0);
+                        const remoteDate = new Date(merged[idx].updatedAt || 0);
+                        if (localDate > remoteDate) {
+                            console.log('🔀 Équipe locale plus récente:', local.name);
+                            merged[idx] = local;
+                        }
+                    } else {
+                        // Équipe locale non présente dans Supabase, l'ajouter
+                        merged.push(local);
+                    }
+                }
+                ch.equipes = merged;
+            }
+        }
+
+        // Sauvegarder les données fusionnées dans localStorage
+        saveData(appData);
 
         // Restaurer la sélection du chantier courant
         if (currentId) {
