@@ -2902,7 +2902,8 @@ function mapChantierFromSupabase(c) {
         archivedAt: c.archived_at ? formatDate(c.archived_at) : null,
         history: [],
         _historyNeedsRefresh: true, // Marquer que l'historique doit être chargé
-        lastMessage: c.last_message || ''
+        lastMessage: c.last_message || '',
+        equipes: c.equipes || [] // Récupérer les équipes depuis Supabase
     };
 }
 
