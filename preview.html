@@ -544,6 +544,21 @@
                             </button>
                         </div>
 
+                        <!-- Section Documents -->
+                        <div id="detail-documents-section" class="mb-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="font-semibold text-slate-800 dark:text-white">📁 Documents</h3>
+                                <span id="detail-documents-count" class="text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full">0</span>
+                            </div>
+                            <div id="detail-documents-list" class="space-y-2">
+                                <!-- Généré dynamiquement par renderDocuments() -->
+                            </div>
+                            <button onclick="openAddDocumentModal()" class="w-full mt-3 py-2 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl text-slate-500 dark:text-slate-400 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                Ajouter un document
+                            </button>
+                        </div>
+
                         <h3 class="font-semibold text-slate-800 mb-3">Historique</h3>
                         <div id="detail-history" class="space-y-4">
                             <!-- Historique dynamique -->
@@ -865,6 +880,21 @@
                     </button>
                 </div>
 
+                <!-- Section Documents Mobile -->
+                <div id="mobile-detail-documents-section" class="mb-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold text-slate-800 dark:text-white text-sm">📁 Documents</h3>
+                        <span id="mobile-detail-documents-count" class="text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full">0</span>
+                    </div>
+                    <div id="mobile-detail-documents-list" class="space-y-2">
+                        <!-- Généré dynamiquement -->
+                    </div>
+                    <button onclick="openAddDocumentModal()" class="w-full mt-3 py-2 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl text-slate-500 dark:text-slate-400 text-xs hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        Ajouter un document
+                    </button>
+                </div>
+
                 <h3 class="font-semibold text-slate-800 mb-3">Historique</h3>
                 <div id="mobile-detail-history" class="space-y-3">
                     <!-- Historique dynamique mobile -->
@@ -1085,6 +1115,49 @@
             </div>
             <button onclick="addEquipeToChantier()" class="w-full bg-primary-600 text-white py-4 rounded-xl font-semibold hover:bg-primary-700">
                 Ajouter l'équipe
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajouter Document -->
+<div id="addDocumentModal" class="modal-overlay" onclick="closeAddDocumentModal(event)">
+    <div class="modal-content dark:bg-slate-800" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-slate-800 dark:text-white">Ajouter un document</h2>
+            <button onclick="closeAddDocumentModal()" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Type de document</label>
+                <select id="document-type" class="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="devis">📄 Devis</option>
+                    <option value="facture">🧾 Facture</option>
+                    <option value="plan">📐 Plan</option>
+                    <option value="photo">🖼️ Photo</option>
+                    <option value="contrat">📋 Contrat</option>
+                    <option value="autre">📎 Autre</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Nom du document</label>
+                <input type="text" id="document-name" placeholder="Ex: Devis cuisine, Plan RDC..." class="w-full border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Fichier *</label>
+                <input type="file" id="document-file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx" class="hidden" onchange="handleDocumentFileSelect(this)">
+                <div id="document-file-preview" onclick="document.getElementById('document-file').click()" class="w-full border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-6 text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                    <svg class="w-10 h-10 text-slate-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Cliquez pour sélectionner un fichier</p>
+                    <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">PDF, Images, Word, Excel (max 10 MB)</p>
+                </div>
+            </div>
+            <button id="add-document-btn" onclick="addDocumentToChantier()" disabled class="w-full bg-primary-600 text-white py-4 rounded-xl font-semibold hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                Ajouter le document
             </button>
         </div>
     </div>
@@ -2985,7 +3058,8 @@ function mapChantierFromSupabase(c) {
         history: [],
         _historyNeedsRefresh: true, // Marquer que l'historique doit être chargé
         lastMessage: c.last_message || '',
-        equipes: c.equipes || [] // Récupérer les équipes depuis Supabase
+        equipes: c.equipes || [], // Récupérer les équipes depuis Supabase
+        documents: c.documents || [] // Récupérer les documents depuis Supabase
     };
 }
 
@@ -3784,6 +3858,11 @@ function renderChantierDetail() {
     // Rendre la section équipes (si elle existe)
     if (typeof renderEquipes === 'function') {
         renderEquipes();
+    }
+
+    // Rendre la section documents
+    if (typeof renderDocuments === 'function') {
+        renderDocuments();
     }
 }
 
@@ -6265,6 +6344,242 @@ function toggleClientEquipesDetail() {
         renderClientEquipes();
         btn.textContent = 'Voir toutes les équipes';
     }
+}
+
+// =============================================
+// GESTION DES DOCUMENTS
+// =============================================
+
+let pendingDocumentFile = null;
+
+// Ouvrir le modal d'ajout de document
+function openAddDocumentModal() {
+    pendingDocumentFile = null;
+    document.getElementById('document-name').value = '';
+    document.getElementById('document-type').value = 'devis';
+    document.getElementById('document-file').value = '';
+    document.getElementById('add-document-btn').disabled = true;
+
+    // Reset preview
+    document.getElementById('document-file-preview').innerHTML = `
+        <svg class="w-10 h-10 text-slate-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+        </svg>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Cliquez pour sélectionner un fichier</p>
+        <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">PDF, Images, Word, Excel (max 10 MB)</p>`;
+
+    document.getElementById('addDocumentModal').classList.add('active');
+}
+
+// Fermer le modal
+function closeAddDocumentModal(event) {
+    if (!event || event.target === event.currentTarget) {
+        document.getElementById('addDocumentModal').classList.remove('active');
+        pendingDocumentFile = null;
+    }
+}
+
+// Sélection d'un fichier
+function handleDocumentFileSelect(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    // Vérifier taille (max 10 MB)
+    if (file.size > 10 * 1024 * 1024) {
+        showToast('Fichier trop volumineux (max 10 MB)');
+        return;
+    }
+
+    pendingDocumentFile = file;
+    document.getElementById('add-document-btn').disabled = false;
+
+    // Auto-remplir le nom si vide
+    const nameInput = document.getElementById('document-name');
+    if (!nameInput.value) {
+        nameInput.value = file.name.replace(/\.[^/.]+$/, '');
+    }
+
+    // Afficher preview
+    const preview = document.getElementById('document-file-preview');
+    const ext = file.name.split('.').pop().toLowerCase();
+    const iconMap = {
+        'pdf': '📄', 'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️',
+        'doc': '📝', 'docx': '📝', 'xls': '📊', 'xlsx': '📊'
+    };
+    const icon = iconMap[ext] || '📎';
+    const sizeStr = file.size < 1024 ? file.size + ' o' :
+                    file.size < 1024 * 1024 ? Math.round(file.size / 1024) + ' Ko' :
+                    (file.size / (1024 * 1024)).toFixed(1) + ' Mo';
+
+    preview.innerHTML = `
+        <div class="flex items-center gap-3 text-left">
+            <span class="text-3xl">${icon}</span>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-slate-700 dark:text-white truncate">${escapeHtml(file.name)}</p>
+                <p class="text-xs text-slate-400">${sizeStr}</p>
+            </div>
+            <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+        </div>`;
+}
+
+// Ajouter un document au chantier
+async function addDocumentToChantier() {
+    const chantier = getCurrentChantier();
+    if (!chantier || !pendingDocumentFile) return;
+
+    const name = document.getElementById('document-name').value.trim() || pendingDocumentFile.name;
+    const type = document.getElementById('document-type').value;
+
+    // Convertir le fichier en base64 pour stockage localStorage
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const doc = {
+            id: 'doc_' + Date.now(),
+            name: name,
+            type: type,
+            fileName: pendingDocumentFile.name,
+            fileSize: pendingDocumentFile.size,
+            mimeType: pendingDocumentFile.type,
+            dataUrl: e.target.result,
+            createdAt: new Date().toISOString()
+        };
+
+        // Initialiser le tableau si nécessaire
+        if (!chantier.documents) chantier.documents = [];
+        chantier.documents.push(doc);
+
+        // Sauvegarder d'abord dans localStorage
+        saveData(appData);
+
+        // Sync Supabase (non-bloquant) - sans le dataUrl pour éviter la limite de taille
+        if (window.SuiviTravauxAPI?.Chantiers) {
+            try {
+                const docsForSync = chantier.documents.map(d => ({
+                    id: d.id, name: d.name, type: d.type,
+                    fileName: d.fileName, fileSize: d.fileSize,
+                    mimeType: d.mimeType, createdAt: d.createdAt
+                }));
+                await SuiviTravauxAPI.Chantiers.update(chantier.id, { documents: docsForSync });
+            } catch (err) {
+                console.warn('Sync documents Supabase ignorée:', err.message);
+            }
+        }
+
+        closeAddDocumentModal();
+        renderDocuments();
+        showToast('Document ajouté !');
+    };
+    reader.readAsDataURL(pendingDocumentFile);
+}
+
+// Supprimer un document
+function deleteDocument(docId) {
+    if (!confirm('Supprimer ce document ?')) return;
+
+    const chantier = getCurrentChantier();
+    if (!chantier?.documents) return;
+
+    chantier.documents = chantier.documents.filter(d => d.id !== docId);
+    saveData(appData);
+
+    // Sync Supabase (non-bloquant)
+    if (window.SuiviTravauxAPI?.Chantiers) {
+        const docsForSync = chantier.documents.map(d => ({
+            id: d.id, name: d.name, type: d.type,
+            fileName: d.fileName, fileSize: d.fileSize,
+            mimeType: d.mimeType, createdAt: d.createdAt
+        }));
+        SuiviTravauxAPI.Chantiers.update(chantier.id, { documents: docsForSync }).catch(() => {});
+    }
+
+    renderDocuments();
+    showToast('Document supprimé');
+}
+
+// Ouvrir/télécharger un document
+function openDocument(docId) {
+    const chantier = getCurrentChantier();
+    const doc = chantier?.documents?.find(d => d.id === docId);
+    if (!doc?.dataUrl) {
+        showToast('Document non disponible');
+        return;
+    }
+
+    // Ouvrir dans un nouvel onglet
+    const link = document.createElement('a');
+    link.href = doc.dataUrl;
+    link.download = doc.fileName;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Afficher les documents
+function renderDocuments() {
+    const chantier = getCurrentChantier();
+    const documents = chantier?.documents || [];
+
+    const desktopList = document.getElementById('detail-documents-list');
+    const mobileList = document.getElementById('mobile-detail-documents-list');
+    const desktopCount = document.getElementById('detail-documents-count');
+    const mobileCount = document.getElementById('mobile-detail-documents-count');
+
+    if (documents.length === 0) {
+        const emptyHtml = '<p class="text-sm text-slate-400 dark:text-slate-500 text-center py-4">Aucun document pour l\'instant</p>';
+        if (desktopList) desktopList.innerHTML = emptyHtml;
+        if (mobileList) mobileList.innerHTML = emptyHtml;
+        if (desktopCount) desktopCount.textContent = '0';
+        if (mobileCount) mobileCount.textContent = '0';
+        return;
+    }
+
+    if (desktopCount) desktopCount.textContent = documents.length;
+    if (mobileCount) mobileCount.textContent = documents.length;
+
+    const typeIcons = {
+        'devis': '📄', 'facture': '🧾', 'plan': '📐',
+        'photo': '🖼️', 'contrat': '📋', 'autre': '📎'
+    };
+    const typeNames = {
+        'devis': 'Devis', 'facture': 'Facture', 'plan': 'Plan',
+        'photo': 'Photo', 'contrat': 'Contrat', 'autre': 'Autre'
+    };
+
+    let html = '';
+    documents.forEach(doc => {
+        const icon = typeIcons[doc.type] || '📎';
+        const typeName = typeNames[doc.type] || 'Autre';
+        const sizeStr = doc.fileSize < 1024 ? doc.fileSize + ' o' :
+                        doc.fileSize < 1024 * 1024 ? Math.round(doc.fileSize / 1024) + ' Ko' :
+                        (doc.fileSize / (1024 * 1024)).toFixed(1) + ' Mo';
+        const date = new Date(doc.createdAt);
+        const dateStr = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+
+        html += `
+        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl flex-shrink-0">${icon}</span>
+                <div class="flex-1 min-w-0 cursor-pointer" onclick="openDocument('${doc.id}')">
+                    <p class="font-medium text-slate-800 dark:text-white text-sm truncate">${escapeHtml(doc.name)}</p>
+                    <p class="text-xs text-slate-400 dark:text-slate-500">${typeName} - ${sizeStr} - ${dateStr}</p>
+                </div>
+                <div class="flex items-center gap-1">
+                    <button onclick="openDocument('${doc.id}')" class="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg" title="Télécharger">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    </button>
+                    <button onclick="deleteDocument('${doc.id}')" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg" title="Supprimer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>`;
+    });
+
+    if (desktopList) desktopList.innerHTML = html;
+    if (mobileList) mobileList.innerHTML = html;
 }
 
 // Variables pour le modal équipe
