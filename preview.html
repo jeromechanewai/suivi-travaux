@@ -367,7 +367,7 @@
                 <!-- Option 2: S'abonner -->
                 <button onclick="hideDemoUpgradeModal(); openSubscriptionModal();" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 rounded-xl font-semibold hover:from-amber-600 hover:to-orange-600 flex items-center justify-center gap-2">
                     <span>S'abonner maintenant</span>
-                    <span class="text-xs opacity-75">(9,90€/mois)</span>
+                    <span class="text-xs opacity-75">(49,99€/mois)</span>
                 </button>
 
                 <!-- Continuer en démo -->
@@ -1532,10 +1532,11 @@
                 <div class="px-4 pb-4 text-sm text-slate-600">
                     <p class="mb-2">Nous proposons une <strong>période d'essai gratuite de 14 jours</strong>, puis :</p>
                     <ul class="list-disc list-inside space-y-1">
-                        <li><strong>Abonnement mensuel :</strong> 9,90€/mois</li>
-                        <li><strong>Abonnement annuel :</strong> 99€/an (2 mois offerts)</li>
+                        <li><strong>Solo :</strong> 49,99€/mois (5 chantiers, 100 SMS)</li>
+                        <li><strong>Pro :</strong> 69,99€/mois (illimité, 200 SMS)</li>
+                        <li><strong>Agence :</strong> 119,99€/mois (tout illimité, 500 SMS)</li>
                     </ul>
-                    <p class="mt-2 text-slate-500">Chantiers illimités, photos illimitées, support prioritaire inclus.</p>
+                    <p class="mt-2 text-slate-500">Documents, multi-équipes, vue client temps réel inclus dans toutes les offres.</p>
                 </div>
             </details>
 
@@ -1725,10 +1726,11 @@
             <p><strong>Essai gratuit :</strong> 14 jours sans engagement ni carte bancaire.</p>
             <p class="mt-2"><strong>Abonnements :</strong></p>
             <ul class="list-disc list-inside space-y-1 ml-2">
-                <li>Mensuel : 9,90€ TTC/mois, renouvelé automatiquement</li>
-                <li>Annuel : 99€ TTC/an (économie de 2 mois)</li>
-                <li>Licence à vie : 199€ TTC (paiement unique)</li>
+                <li>Solo : 49,99€ TTC/mois (5 chantiers, 100 SMS inclus)</li>
+                <li>Pro : 69,99€ TTC/mois (chantiers illimités, 200 SMS inclus)</li>
+                <li>Agence : 119,99€ TTC/mois (tout illimité, 500 SMS, multi-coordinateurs)</li>
             </ul>
+            <p class="mt-1 text-sm">Tous les abonnements sont mensuels et renouvelés automatiquement.</p>
             <p class="mt-2">Les prix peuvent être modifiés. Tout changement sera notifié 30 jours à l'avance et n'affectera pas les abonnements en cours.</p>
 
             <h3 class="font-semibold text-slate-800">4. Renouvellement et résiliation</h3>
@@ -1803,134 +1805,131 @@
 
 <!-- Subscription Modal -->
 <div id="subscriptionModal" class="modal-overlay" onclick="closeSubscriptionModal(event)">
-    <div class="modal-content" style="max-height: 90vh;" onclick="event.stopPropagation()">
+    <div class="modal-content dark:bg-slate-800" style="max-height: 90vh;" onclick="event.stopPropagation()">
         <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold text-slate-800">Mon abonnement</h2>
-            <button onclick="closeSubscriptionModal()" class="p-2 text-slate-400 hover:text-slate-600">
+            <h2 class="text-xl font-bold text-slate-800 dark:text-white">Choisir mon offre</h2>
+            <button onclick="closeSubscriptionModal()" class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>
 
         <!-- Statut actuel -->
-        <div id="subscription-status" class="mb-6 p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200">
+        <div id="subscription-status" class="mb-5 p-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/30 dark:to-orange-900/30 border border-amber-200 dark:border-amber-700">
             <div class="flex items-center gap-3 mb-2">
-                <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                <div class="w-10 h-10 bg-amber-100 dark:bg-amber-900/50 rounded-full flex items-center justify-center">
                     <span class="text-xl">🎁</span>
                 </div>
                 <div>
-                    <p class="font-semibold text-slate-800">Période d'essai</p>
-                    <p class="text-sm text-slate-600">Il vous reste <strong id="trial-days">14 jours</strong></p>
+                    <p class="font-semibold text-slate-800 dark:text-white">Période d'essai</p>
+                    <p class="text-sm text-slate-600 dark:text-slate-300">Il vous reste <strong id="trial-days">14 jours</strong></p>
                 </div>
             </div>
-            <div class="h-2 bg-amber-200 rounded-full overflow-hidden mt-3">
+            <div class="h-2 bg-amber-200 dark:bg-amber-800 rounded-full overflow-hidden mt-3">
                 <div id="trial-progress" class="h-full bg-amber-500 rounded-full" style="width: 100%"></div>
             </div>
         </div>
 
-        <!-- Offres -->
-        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-3">Choisir une offre</p>
-
-        <div class="space-y-3 mb-6">
-            <!-- Mensuel -->
+        <!-- 3 Plans -->
+        <div class="space-y-3 mb-5">
+            <!-- Solo -->
             <label class="block cursor-pointer">
-                <input type="radio" name="plan" value="monthly" class="hidden peer">
-                <div class="p-4 border-2 border-slate-200 rounded-xl peer-checked:border-primary-600 peer-checked:bg-primary-50 transition-all">
+                <input type="radio" name="plan" value="solo" class="hidden peer">
+                <div class="p-4 border-2 border-slate-200 dark:border-slate-600 rounded-xl peer-checked:border-primary-600 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/30 transition-all">
                     <div class="flex justify-between items-center">
                         <div>
-                            <p class="font-semibold text-slate-800">Mensuel</p>
-                            <p class="text-sm text-slate-500">Sans engagement</p>
+                            <p class="font-semibold text-slate-800 dark:text-white">Solo</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">5 chantiers - 100 SMS/mois</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-2xl font-bold text-slate-800">9,90€</p>
-                            <p class="text-xs text-slate-500">/mois</p>
+                            <p class="text-2xl font-bold text-slate-800 dark:text-white">49,99€</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">/mois</p>
                         </div>
                     </div>
                 </div>
             </label>
 
-            <!-- Annuel (recommandé) -->
+            <!-- Pro (recommandé) -->
             <label class="block cursor-pointer">
-                <input type="radio" name="plan" value="yearly" class="hidden peer" checked>
-                <div class="p-4 border-2 border-slate-200 rounded-xl peer-checked:border-primary-600 peer-checked:bg-primary-50 transition-all relative">
-                    <span class="absolute -top-2 left-4 px-2 py-0.5 bg-green-500 text-white text-xs font-medium rounded-full">2 mois offerts</span>
+                <input type="radio" name="plan" value="pro" class="hidden peer" checked>
+                <div class="p-4 border-2 border-slate-200 dark:border-slate-600 rounded-xl peer-checked:border-primary-600 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/30 transition-all relative">
+                    <span class="absolute -top-2 left-4 px-2 py-0.5 bg-primary-600 text-white text-xs font-medium rounded-full">Populaire</span>
                     <div class="flex justify-between items-center">
                         <div>
-                            <p class="font-semibold text-slate-800">Annuel</p>
-                            <p class="text-sm text-slate-500">Meilleur rapport qualité/prix</p>
+                            <p class="font-semibold text-slate-800 dark:text-white">Pro</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Chantiers illimités - 200 SMS/mois</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-2xl font-bold text-slate-800">99€</p>
-                            <p class="text-xs text-slate-500">/an <span class="line-through text-slate-400">118,80€</span></p>
+                            <p class="text-2xl font-bold text-slate-800 dark:text-white">69,99€</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">/mois</p>
                         </div>
                     </div>
                 </div>
             </label>
 
-            <!-- Licence à vie (discret) -->
-            <details class="group">
-                <summary class="flex items-center justify-center gap-2 py-2 text-sm text-slate-400 cursor-pointer hover:text-slate-600">
-                    <span>Autres options</span>
-                    <svg class="w-4 h-4 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                </summary>
-                <label class="block cursor-pointer mt-3">
-                    <input type="radio" name="plan" value="lifetime" class="hidden peer">
-                    <div class="p-4 border-2 border-slate-200 rounded-xl peer-checked:border-primary-600 peer-checked:bg-primary-50 transition-all">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <p class="font-semibold text-slate-800">Licence à vie</p>
-                                <p class="text-sm text-slate-500">Paiement unique, accès permanent</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-2xl font-bold text-slate-800">199€</p>
-                                <p class="text-xs text-slate-500">une seule fois</p>
-                            </div>
+            <!-- Agence -->
+            <label class="block cursor-pointer">
+                <input type="radio" name="plan" value="agence" class="hidden peer">
+                <div class="p-4 border-2 border-slate-200 dark:border-slate-600 rounded-xl peer-checked:border-primary-600 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/30 transition-all">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="font-semibold text-slate-800 dark:text-white">Agence</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Tout illimité - 500 SMS/mois</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl font-bold text-slate-800 dark:text-white">119,99€</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">/mois</p>
                         </div>
                     </div>
-                </label>
-            </details>
+                </div>
+            </label>
         </div>
 
-        <!-- Comparaison Essai vs Pro -->
-        <div class="bg-slate-50 rounded-xl p-4 mb-6">
-            <p class="text-sm font-medium text-slate-700 mb-3">Ce qui change avec la version Pro :</p>
-            <div class="space-y-2 text-sm">
+        <!-- Comparaison des plans -->
+        <div class="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4 mb-5">
+            <p class="text-sm font-medium text-slate-700 dark:text-slate-200 mb-3">Détail des offres :</p>
+            <div class="space-y-2.5 text-sm">
                 <div class="flex items-center justify-between">
-                    <span class="text-slate-600">Nombre de chantiers</span>
-                    <div class="flex items-center gap-3">
-                        <span class="text-slate-400 line-through">3 max</span>
-                        <span class="text-green-600 font-semibold">Illimité ✓</span>
-                    </div>
+                    <span class="text-slate-600 dark:text-slate-300">Chantiers</span>
+                    <span class="text-slate-500 dark:text-slate-400 text-xs">5 / Illimité / Illimité</span>
                 </div>
                 <div class="flex items-center justify-between">
-                    <span class="text-slate-600">Photos et vocaux</span>
-                    <span class="text-green-600 font-semibold">Illimité ✓</span>
+                    <span class="text-slate-600 dark:text-slate-300">SMS "C'est votre tour"</span>
+                    <span class="text-slate-500 dark:text-slate-400 text-xs">100 / 200 / 500</span>
                 </div>
                 <div class="flex items-center justify-between">
-                    <span class="text-slate-600">Partage client</span>
-                    <span class="text-green-600 font-semibold">Illimité ✓</span>
+                    <span class="text-slate-600 dark:text-slate-300">SMS supplémentaire</span>
+                    <span class="text-slate-500 dark:text-slate-400 text-xs">0,10€ / 0,08€ / 0,05€</span>
                 </div>
                 <div class="flex items-center justify-between">
-                    <span class="text-slate-600">Sync temps réel</span>
-                    <span class="text-green-600 font-semibold">✓</span>
+                    <span class="text-slate-600 dark:text-slate-300">Documents & photos</span>
+                    <span class="text-green-600 dark:text-green-400 font-semibold text-xs">Inclus</span>
                 </div>
                 <div class="flex items-center justify-between">
-                    <span class="text-slate-600">Support prioritaire</span>
-                    <span class="text-green-600 font-semibold">✓</span>
+                    <span class="text-slate-600 dark:text-slate-300">Multi-équipes</span>
+                    <span class="text-green-600 dark:text-green-400 font-semibold text-xs">Inclus</span>
                 </div>
                 <div class="flex items-center justify-between">
-                    <span class="text-slate-600">Mises à jour incluses</span>
-                    <span class="text-green-600 font-semibold">✓</span>
+                    <span class="text-slate-600 dark:text-slate-300">Vue client temps réel</span>
+                    <span class="text-green-600 dark:text-green-400 font-semibold text-xs">Inclus</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-600 dark:text-slate-300">Support prioritaire</span>
+                    <span class="text-slate-500 dark:text-slate-400 text-xs">- / Oui / Oui</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-600 dark:text-slate-300">Multi-coordinateurs</span>
+                    <span class="text-slate-500 dark:text-slate-400 text-xs">- / - / Oui</span>
                 </div>
             </div>
         </div>
 
         <!-- Bouton -->
-        <button onclick="handleSubscribe()" class="w-full bg-primary-600 text-white py-3 rounded-xl font-semibold hover:bg-primary-700 flex items-center justify-center gap-2">
+        <button onclick="handleSubscribe()" class="w-full bg-gradient-to-r from-primary-600 to-primary-700 text-white py-3.5 rounded-xl font-semibold hover:from-primary-700 hover:to-primary-800 flex items-center justify-center gap-2 shadow-lg shadow-primary-600/20">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
             S'abonner maintenant
         </button>
 
-        <p class="text-xs text-slate-400 text-center mt-3">Paiement sécurisé par Stripe. Annulation possible à tout moment.</p>
+        <p class="text-xs text-slate-400 dark:text-slate-500 text-center mt-3">Paiement sécurisé par Stripe. Annulation possible à tout moment.</p>
     </div>
 </div>
 
@@ -1972,7 +1971,7 @@
             <!-- Offre spéciale -->
             <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6">
                 <p class="text-sm text-amber-800">
-                    <span class="font-semibold">🎁 Offre spéciale :</span> Passez au plan annuel et économisez <strong>2 mois</strong>
+                    <span class="font-semibold">🎁 Offre de lancement :</span> <strong>14 jours d'essai gratuit</strong> sur tous les plans, sans engagement
                 </p>
             </div>
 
@@ -1987,7 +1986,7 @@
                 </button>
             </div>
 
-            <p class="text-xs text-slate-400 mt-4">À partir de 9,90€/mois • Annulation à tout moment</p>
+            <p class="text-xs text-slate-400 mt-4">À partir de 49,99€/mois • Annulation à tout moment</p>
         </div>
     </div>
 </div>
@@ -5837,19 +5836,26 @@ function handleSubscribe() {
         return;
     }
 
-    const prices = {
-        monthly: '9,90€/mois',
-        yearly: '99€/an',
-        lifetime: '199€ (une fois)'
+    const plans = {
+        solo: { name: 'Solo', price: '49,99€/mois' },
+        pro: { name: 'Pro', price: '69,99€/mois' },
+        agence: { name: 'Agence', price: '119,99€/mois' }
     };
 
-    // En production, rediriger vers Stripe Checkout
-    showToast(`Redirection vers le paiement... (${prices[selectedPlan]})`);
+    const plan = plans[selectedPlan];
 
-    // Simuler la redirection vers Stripe
+    // En production, rediriger vers Stripe Checkout
+    showToast(`Redirection vers le paiement... (${plan.name} - ${plan.price})`);
+
+    // TODO: Stripe Checkout
     // window.location.href = '/api/checkout?plan=' + selectedPlan;
 
-    console.log('Plan sélectionné:', selectedPlan);
+    console.log('Plan sélectionné:', selectedPlan, plan);
+}
+
+// Alias manquant
+function openSubscriptionModal() {
+    showSubscriptionModal();
 }
 
 // =============================================
