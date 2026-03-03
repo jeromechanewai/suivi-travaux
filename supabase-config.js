@@ -415,6 +415,35 @@ const ClientAPI = {
 };
 
 // =============================================
+// API EQUIPE (PUBLIC - sans auth, via token)
+// =============================================
+
+const EquipeAPI = {
+    // Récupérer les données d'un chantier par token d'équipe
+    async getByToken(token) {
+        const { data, error } = await supabaseClient
+            .rpc('get_chantier_by_equipe_token', { p_token: token });
+
+        if (error) throw error;
+        return data; // JSONB: { chantier, equipe, otherEquipes, coordinatorPhone }
+    },
+
+    // Mettre à jour l'étape d'une équipe par son token
+    async updateStage(token, stage, message = null, photos = []) {
+        const { data, error } = await supabaseClient
+            .rpc('update_equipe_by_token', {
+                p_token: token,
+                p_stage: stage,
+                p_message: message,
+                p_photos: photos
+            });
+
+        if (error) throw error;
+        return data; // boolean: true si mis à jour
+    }
+};
+
+// =============================================
 // STORAGE (Photos & Vocaux)
 // =============================================
 
@@ -1245,6 +1274,7 @@ window.SuiviTravauxAPI = {
     Chantiers,
     Updates,
     ClientAPI,
+    EquipeAPI,
     // Nouveau système multi-équipes
     Enterprises,
     Projects,

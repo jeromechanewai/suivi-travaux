@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#2563eb">
     <title>Mon intervention - SuiviTravaux.app</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -205,6 +206,9 @@ let interventionData = null;
 let chantierData = null;
 let selectedStage = null;
 let photos = [];
+let dataSource = null; // 'supabase' ou 'localStorage'
+let lastSubmitTime = 0;
+const SUBMIT_COOLDOWN = 5000; // 5 secondes entre chaque soumission
 const token = new URLSearchParams(window.location.search).get('t');
 
 // Mapping étapes
@@ -224,6 +228,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    // Initialiser Supabase
+    try {
+        if (window.SuiviTravauxAPI?.init) {
+            window.SuiviTravauxAPI.init();
+        }
+    } catch (e) {
+        console.log('Supabase init ignoré:', e.message);
+    }
+
     try {
         await loadIntervention();
     } catch (error) {
@@ -236,30 +249,69 @@ document.addEventListener('DOMContentLoaded', async () => {
 // CHARGEMENT DES DONNÉES
 // =============================================
 async function loadIntervention() {
-    // Mode démo : charger depuis localStorage si pas de Supabase
-    // Toujours charger depuis localStorage (partagé avec preview.html sur le même domaine)
-    // L'utilisateur sur equipe.html n'est pas authentifié, donc on ne peut pas utiliser Supabase directement
-    loadDemoData();
+    // 1. Essayer Supabase d'abord (fonctionne sur n'importe quel appareil)
+    try {
+        if (window.SuiviTravauxAPI?.EquipeAPI) {
+            console.log('Tentative chargement Supabase...');
+            const result = await window.SuiviTravauxAPI.EquipeAPI.getByToken(token);
+
+            if (result) {
+                console.log('✅ Données chargées depuis Supabase');
+                loadFromSupabase(result);
+                return;
+            }
+        }
+    } catch (e) {
+        console.log('⚠️ Supabase indisponible:', e.message);
+    }
+
+    // 2. Fallback localStorage (même navigateur que le coordinateur)
+    console.log('Fallback localStorage...');
+    loadFromLocalStorage();
 }
 
-function loadDemoData() {
-    // Charger depuis le localStorage principal de preview.html
-    const mainData = localStorage.getItem('suivitravaux_data');
+function loadFromSupabase(result) {
+    dataSource = 'supabase';
 
-    console.log('Token recherché:', token);
-    console.log('Données localStorage:', mainData ? 'trouvées' : 'vides');
+    const eq = result.equipe;
+    const ch = result.chantier;
+
+    interventionData = {
+        id: eq.id,
+        token: eq.token,
+        name: eq.name,
+        entreprise: eq.entreprise,
+        color: eq.color,
+        stage: eq.stage || 'preparation',
+        history: eq.history || [],
+        phone: eq.phone
+    };
+
+    chantierData = {
+        id: ch.id,
+        name: ch.name,
+        client: ch.client,
+        coordinatorPhone: result.coordinatorPhone || null,
+        equipes: [
+            // L'équipe courante
+            { id: eq.id, name: eq.name, stage: eq.stage || 'preparation', color: eq.color },
+            // Les autres équipes
+            ...(result.otherEquipes || [])
+        ]
+    };
+
+    renderPage();
+}
+
+function loadFromLocalStorage() {
+    dataSource = 'localStorage';
+    const mainData = localStorage.getItem('suivitravaux_data');
 
     if (mainData) {
         try {
             const appData = JSON.parse(mainData);
-            console.log('Chantiers trouvés:', appData.chantiers?.length || 0);
 
-            // Chercher l'équipe avec ce token dans tous les chantiers
             for (const chantier of (appData.chantiers || [])) {
-                console.log('Chantier:', chantier.name, '- Équipes:', chantier.equipes?.length || 0);
-                if (chantier.equipes) {
-                    chantier.equipes.forEach(e => console.log('  - Équipe:', e.name, 'Token:', e.token));
-                }
                 const equipes = chantier.equipes || [];
                 const equipe = equipes.find(e => e.token === token);
 
@@ -291,16 +343,14 @@ function loadDemoData() {
                 }
             }
 
-            // Token non trouvé dans les données
             showError('Ce lien n\'est pas valide ou l\'équipe a été supprimée.');
             return;
         } catch (e) {
-            console.error('Erreur lecture données:', e);
+            console.error('Erreur lecture localStorage:', e);
         }
     }
 
-    // Aucune donnée trouvée
-    showError('Lien invalide. Vérifiez que vous avez copié le lien en entier.');
+    showError('Lien invalide ou données non disponibles. Vérifiez votre connexion internet et réessayez.');
 }
 
 // =============================================
@@ -398,14 +448,16 @@ function renderHistory() {
     noHistory.classList.add('hidden');
 
     let html = '';
-    history.slice(0, 5).forEach(entry => {
+    history.slice(0, 10).forEach(entry => {
         const stage = stageDisplay[entry.stage] || stageDisplay['preparation'];
         const date = formatDate(entry.date);
 
         let photosHtml = '';
         if (entry.photos && entry.photos.length > 0) {
             photosHtml = '<div class="flex gap-2 mt-2">' +
-                entry.photos.map(p => `<img src="${p}" alt="Photo" class="w-16 h-16 rounded-lg object-cover">`).join('') +
+                entry.photos.filter(p => p && p.length > 0).map(p =>
+                    `<img src="${escapeHtml(p)}" alt="Photo" class="w-16 h-16 rounded-lg object-cover">`
+                ).join('') +
                 '</div>';
         }
 
@@ -441,6 +493,10 @@ function handlePhoto(event) {
 
     toAdd.forEach(file => {
         if (!file.type.startsWith('image/')) return;
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('Photo trop lourde (max 5 MB)');
+            return;
+        }
 
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -465,7 +521,7 @@ function renderPhotosPreview() {
         html += `
         <div class="relative w-20 h-20 rounded-xl overflow-hidden group photo-preview">
             <img src="${photo.dataUrl}" alt="Photo ${index + 1}" class="w-full h-full object-cover">
-            <button onclick="removePhoto(${index})"
+            <button type="button" onclick="removePhoto(${index})"
                 class="absolute top-1 right-1 w-6 h-6 bg-black/60 rounded-full flex items-center justify-center">
                 <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -489,6 +545,15 @@ async function submitUpdate() {
         return;
     }
 
+    // Rate limiting
+    const now = Date.now();
+    if (now - lastSubmitTime < SUBMIT_COOLDOWN) {
+        const remaining = Math.ceil((SUBMIT_COOLDOWN - (now - lastSubmitTime)) / 1000);
+        showToast(`Patientez ${remaining}s avant de renvoyer`);
+        return;
+    }
+    lastSubmitTime = now;
+
     const message = document.getElementById('update-message').value.trim();
     const btn = document.getElementById('submit-btn');
 
@@ -496,15 +561,36 @@ async function submitUpdate() {
     btn.innerHTML = '<svg class="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Envoi...';
 
     try {
-        // Créer l'entrée historique
+        // Préparer les URLs des photos (base64 pour l'instant)
+        const photoUrls = photos.map(p => p.dataUrl);
+
+        // 1. Essayer Supabase d'abord
+        let supabaseSuccess = false;
+        if (window.SuiviTravauxAPI?.EquipeAPI) {
+            try {
+                const result = await window.SuiviTravauxAPI.EquipeAPI.updateStage(
+                    token,
+                    selectedStage,
+                    message || null,
+                    photoUrls
+                );
+                supabaseSuccess = !!result;
+                if (supabaseSuccess) {
+                    console.log('✅ Mise à jour Supabase réussie');
+                }
+            } catch (e) {
+                console.log('⚠️ Supabase update échoué:', e.message);
+            }
+        }
+
+        // 2. Mettre à jour les données locales (pour l'affichage immédiat)
         const historyEntry = {
             stage: selectedStage,
             message: message || null,
             date: new Date().toISOString(),
-            photos: photos.map(p => p.dataUrl)
+            photos: photoUrls
         };
 
-        // Mettre à jour les données locales
         interventionData.stage = selectedStage;
         interventionData.updatedAt = new Date().toISOString();
         if (message) interventionData.lastMessage = message;
@@ -519,12 +605,8 @@ async function submitUpdate() {
             }
         }
 
-        // Sauvegarder dans le localStorage principal (partagé avec preview.html)
-        saveToMainStorage();
-
-        // Tenter sync directe vers Supabase (pour que client.html voie immédiatement)
-        // Si ça échoue (RLS), pas grave - le localStorage est déjà sauvegardé
-        tryDirectSupabaseSync();
+        // 3. Sauvegarder aussi en localStorage (fallback + sync avec preview.html si même navigateur)
+        saveToLocalStorage();
 
         // Reset formulaire
         document.getElementById('update-message').value = '';
@@ -536,11 +618,12 @@ async function submitUpdate() {
 
         // Confirmation
         const stageText = stageDisplay[selectedStage]?.text || selectedStage;
-        showToast(`Mis à jour : ${stageText}`);
+        showToast(supabaseSuccess ? `${stageText} — synchronisé` : `${stageText} — sauvegardé localement`);
 
     } catch (error) {
         console.error('Erreur mise à jour:', error);
         showToast('Erreur lors de la mise à jour');
+        lastSubmitTime = 0; // Permettre de réessayer immédiatement en cas d'erreur
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Envoyer la mise à jour';
@@ -548,24 +631,21 @@ async function submitUpdate() {
 }
 
 // =============================================
-// SAUVEGARDE
+// SAUVEGARDE LOCALSTORAGE (fallback)
 // =============================================
-function saveToMainStorage() {
-    // Sauvegarder les modifications dans le localStorage principal (partagé avec preview.html)
+function saveToLocalStorage() {
     const mainData = localStorage.getItem('suivitravaux_data');
     if (!mainData) return;
 
     try {
         const appData = JSON.parse(mainData);
 
-        // Trouver et mettre à jour l'équipe dans le bon chantier (comparer en string)
         for (const chantier of (appData.chantiers || [])) {
             if (String(chantier.id) === String(chantierData.id)) {
                 const equipes = chantier.equipes || [];
                 const idx = equipes.findIndex(e => e.token === token);
 
                 if (idx !== -1) {
-                    // Mettre à jour l'équipe
                     equipes[idx].stage = interventionData.stage;
                     equipes[idx].history = interventionData.history;
                     equipes[idx].updatedAt = interventionData.updatedAt;
@@ -574,41 +654,14 @@ function saveToMainStorage() {
                     }
                     chantier.equipes = equipes;
 
-                    // Sauvegarder
                     localStorage.setItem('suivitravaux_data', JSON.stringify(appData));
-                    console.log('Données sauvegardées dans localStorage principal');
+                    console.log('Données sauvegardées en localStorage');
                     return;
                 }
             }
         }
     } catch (e) {
-        console.error('Erreur sauvegarde:', e);
-    }
-}
-
-// Tenter une sync directe vers Supabase (sans auth)
-async function tryDirectSupabaseSync() {
-    if (!chantierData?.id) return;
-
-    try {
-        const mainData = localStorage.getItem('suivitravaux_data');
-        if (!mainData) return;
-
-        const appData = JSON.parse(mainData);
-        const chantier = appData.chantiers?.find(c => String(c.id) === String(chantierData.id));
-
-        if (!chantier?.equipes) return;
-
-        // Utiliser le client Supabase directement (sans auth)
-        if (window.SuiviTravauxAPI?.Chantiers) {
-            // Essayer via l'API (nécessite peut-être auth)
-            await window.SuiviTravauxAPI.Chantiers.update(chantierData.id, {
-                equipes: chantier.equipes
-            });
-            console.log('✅ Sync Supabase directe réussie');
-        }
-    } catch (e) {
-        console.log('⚠️ Sync directe ignorée:', e.message);
+        console.error('Erreur sauvegarde localStorage:', e);
     }
 }
 
