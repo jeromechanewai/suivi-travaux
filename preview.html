@@ -309,17 +309,18 @@
         .demo-mode .demo-clickable:hover {
             opacity: 0.8;
         }
-        /* Bannière démo - ajustement mobile */
+        /* Bannière démo / expired - ajustement mobile */
         @media (max-width: 500px) {
-            #demo-banner {
+            #demo-banner, #expired-banner {
                 padding: 8px 12px;
                 font-size: 12px;
             }
-            #demo-banner button {
+            #demo-banner button, #expired-banner button {
                 padding: 4px 8px;
                 font-size: 10px;
             }
-            body.demo-mode .mobile-content {
+            body.demo-mode .mobile-content,
+            body.expired-mode .mobile-content {
                 padding-top: 36px;
             }
         }
@@ -361,13 +362,25 @@
 <!-- Toast notification avec role pour les lecteurs d'écran -->
 <div id="toast" class="toast" role="alert" aria-live="polite"></div>
 
+<!-- Bannière Essai Expiré (fixe en haut) -->
+<div id="expired-banner" class="hidden fixed top-0 left-0 right-0 bg-gradient-to-r from-red-500 to-orange-500 text-white text-center py-2 px-4 z-[9998] shadow-md">
+    <div class="flex items-center justify-center gap-2 text-sm font-medium">
+        <span>Essai terminé</span>
+        <span class="opacity-75">•</span>
+        <span class="opacity-90">Lecture seule</span>
+        <button onclick="showSubscriptionModal()" class="ml-3 bg-white text-red-600 px-3 py-1 rounded-full text-xs font-bold hover:bg-red-50 transition-colors">
+            S'abonner
+        </button>
+    </div>
+</div>
+
 <!-- Bannière Mode Démo (fixe en haut) -->
 <div id="demo-banner" class="hidden fixed top-0 left-0 right-0 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center py-2 px-4 z-[9998] shadow-md">
     <div class="flex items-center justify-center gap-2 text-sm font-medium">
         <span>Mode démo</span>
         <span class="opacity-75">•</span>
         <span class="opacity-90">Fonctionnalités limitées</span>
-        <button onclick="showDemoUpgradeModal()" class="ml-3 bg-white text-amber-600 px-3 py-1 rounded-full text-xs font-bold hover:bg-amber-50 transition-colors">
+        <button onclick="showSubscriptionModal()" class="ml-3 bg-white text-amber-600 px-3 py-1 rounded-full text-xs font-bold hover:bg-amber-50 transition-colors">
             Créer un compte
         </button>
     </div>
@@ -375,39 +388,27 @@
 
 <!-- Modal Upgrade Démo -->
 <div id="demoUpgradeModal" class="modal-overlay" style="align-items: center; background: rgba(0,0,0,0.8); z-index: 10001;">
-    <div class="bg-white rounded-3xl w-full max-w-sm mx-4 overflow-hidden" onclick="event.stopPropagation()">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl w-full max-w-sm mx-4 overflow-hidden" onclick="event.stopPropagation()">
         <div class="p-6">
-            <div class="text-center mb-6">
-                <div class="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <span class="text-3xl">🔒</span>
+            <div class="text-center mb-5">
+                <div class="w-14 h-14 bg-gradient-to-br from-primary-400 to-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <span class="text-2xl text-white">&#10145;</span>
                 </div>
-                <h2 class="text-xl font-bold text-slate-800">Fonctionnalité limitée</h2>
-                <p id="demo-upgrade-message" class="text-slate-500 text-sm mt-2">Cette fonctionnalité n'est pas disponible en mode démo.</p>
+                <h2 class="text-lg font-bold text-slate-800 dark:text-white">Créez votre compte pour continuer</h2>
+                <p id="demo-upgrade-message" class="text-slate-500 dark:text-slate-400 text-sm mt-2">Cette fonctionnalité est disponible avec un compte gratuit.</p>
             </div>
 
             <div class="space-y-3">
-                <!-- Option 1: Créer un compte gratuit -->
+                <!-- Option principale: Créer un compte -->
                 <button onclick="hideDemoUpgradeModal(); showAuthModal(); showSignupForm();" class="w-full bg-primary-600 text-white py-3 rounded-xl font-semibold hover:bg-primary-700 flex items-center justify-center gap-2">
                     <span>Créer un compte gratuit</span>
                     <span class="text-xs opacity-75">(14j d'essai)</span>
                 </button>
 
-                <!-- Option 2: S'abonner -->
-                <button onclick="hideDemoUpgradeModal(); openSubscriptionModal();" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 rounded-xl font-semibold hover:from-amber-600 hover:to-orange-600 flex items-center justify-center gap-2">
-                    <span>S'abonner maintenant</span>
-                    <span class="text-xs opacity-75">(49,99€/mois)</span>
-                </button>
-
                 <!-- Continuer en démo -->
-                <button onclick="hideDemoUpgradeModal()" class="w-full text-slate-500 py-2 text-sm hover:text-slate-700">
+                <button onclick="hideDemoUpgradeModal()" class="w-full text-slate-400 dark:text-slate-500 py-2 text-sm hover:text-slate-600">
                     Continuer en mode démo
                 </button>
-            </div>
-
-            <div class="mt-4 pt-4 border-t border-slate-100">
-                <p class="text-xs text-slate-400 text-center">
-                    En mode démo : 1 chantier, pas de partage réel, pas de photos/vocaux
-                </p>
             </div>
         </div>
     </div>
@@ -1961,56 +1962,49 @@
     </div>
 </div>
 
-<!-- Modal Limite Atteinte (Trial) -->
+<!-- Modal Essai Expiré -->
 <div id="trialLimitModal" class="modal-overlay" onclick="closeTrialLimitModal(event)">
     <div class="modal-content" style="max-width: 400px;" onclick="event.stopPropagation()">
         <div class="text-center">
             <!-- Illustration -->
-            <div class="w-20 h-20 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span class="text-4xl">🚀</span>
+            <div class="w-20 h-20 bg-gradient-to-br from-red-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="text-4xl">⏰</span>
             </div>
 
-            <h2 class="text-xl font-bold text-slate-800 mb-2">Vous avez atteint la limite</h2>
-            <p class="text-slate-600 mb-4">La version d'essai est limitée à <strong>3 chantiers</strong>.</p>
+            <h2 class="text-xl font-bold text-slate-800 dark:text-white mb-2">Votre essai est terminé</h2>
+            <p class="text-slate-600 dark:text-slate-400 mb-4">Vos 14 jours d'essai gratuit sont écoulés. Vos chantiers sont maintenant en <strong>lecture seule</strong>.</p>
 
-            <!-- Ce que l'utilisateur manque -->
-            <div class="bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl p-4 mb-6 text-left">
-                <p class="text-sm font-medium text-slate-700 mb-3">Passez à la version Pro pour débloquer :</p>
-                <ul class="space-y-2 text-sm text-slate-600">
+            <!-- Ce que l'utilisateur retrouve en s'abonnant -->
+            <div class="bg-gradient-to-r from-primary-50 to-blue-50 dark:from-slate-700 dark:to-slate-700 rounded-xl p-4 mb-6 text-left">
+                <p class="text-sm font-medium text-slate-700 dark:text-slate-200 mb-3">Abonnez-vous pour retrouver :</p>
+                <ul class="space-y-2 text-sm text-slate-600 dark:text-slate-300">
                     <li class="flex items-center gap-2">
                         <span class="text-green-500 font-bold">✓</span>
-                        <span><strong>Chantiers illimités</strong> - Plus de limite</span>
+                        <span>Création et mise à jour de chantiers</span>
                     </li>
                     <li class="flex items-center gap-2">
                         <span class="text-green-500 font-bold">✓</span>
-                        <span>Historique complet de vos projets</span>
+                        <span>Envoi de mises à jour aux clients</span>
                     </li>
                     <li class="flex items-center gap-2">
                         <span class="text-green-500 font-bold">✓</span>
-                        <span>Support prioritaire</span>
+                        <span>Gestion des équipes et liens de partage</span>
                     </li>
                     <li class="flex items-center gap-2">
                         <span class="text-green-500 font-bold">✓</span>
-                        <span>Fonctionnalités avancées à venir</span>
+                        <span>Toutes les fonctionnalités sans limite</span>
                     </li>
                 </ul>
-            </div>
-
-            <!-- Offre spéciale -->
-            <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-6">
-                <p class="text-sm text-amber-800">
-                    <span class="font-semibold">🎁 Offre de lancement :</span> <strong>14 jours d'essai gratuit</strong> sur tous les plans, sans engagement
-                </p>
             </div>
 
             <!-- Boutons -->
             <div class="space-y-3">
                 <button onclick="closeTrialLimitModal(); showSubscriptionModal();" class="w-full bg-primary-600 text-white py-3 rounded-xl font-semibold hover:bg-primary-700 flex items-center justify-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    Passer à la version Pro
+                    Choisir un abonnement
                 </button>
-                <button onclick="closeTrialLimitModal()" class="w-full text-slate-500 py-2 text-sm hover:text-slate-700">
-                    Continuer avec mes 3 chantiers
+                <button onclick="closeTrialLimitModal()" class="w-full text-slate-500 dark:text-slate-400 py-2 text-sm hover:text-slate-700">
+                    Continuer en lecture seule
                 </button>
             </div>
 
@@ -2736,6 +2730,35 @@ function hideDemoBanner() {
     }
 }
 
+function showExpiredBanner() {
+    const banner = document.getElementById('expired-banner');
+    if (banner) {
+        banner.classList.remove('hidden');
+        document.body.classList.add('expired-mode');
+        document.body.style.paddingTop = '40px';
+    }
+}
+
+function hideExpiredBanner() {
+    const banner = document.getElementById('expired-banner');
+    if (banner) {
+        banner.classList.add('hidden');
+        document.body.classList.remove('expired-mode');
+        if (APP_MODE !== 'demo') {
+            document.body.style.paddingTop = '';
+        }
+    }
+}
+
+// Vérifier et afficher la bannière expired au chargement
+function checkExpiredState() {
+    if (isReadOnly()) {
+        showExpiredBanner();
+    } else {
+        hideExpiredBanner();
+    }
+}
+
 function showDemoUpgradeModal(message = null) {
     const modal = document.getElementById('demoUpgradeModal');
     const msgEl = document.getElementById('demo-upgrade-message');
@@ -2763,11 +2786,11 @@ function checkDemoRestriction(action, customMessage = null) {
     if (APP_MODE !== 'demo') return false;
 
     const messages = {
-        'photo': 'Les photos ne sont pas disponibles en mode démo.',
-        'voice': 'Les messages vocaux ne sont pas disponibles en mode démo.',
-        'share': 'Le partage réel avec les clients n\'est pas disponible en mode démo.',
-        'whatsapp': 'L\'envoi WhatsApp n\'est pas disponible en mode démo.',
-        'create_chantier': `Vous avez atteint la limite de ${DEMO_CHANTIER_LIMIT} chantier en mode démo.`
+        'photo': 'Ajoutez des photos de chantier avec un compte gratuit.',
+        'voice': 'Envoyez des messages vocaux avec un compte gratuit.',
+        'share': 'Partagez avec vos clients en créant un compte gratuit.',
+        'whatsapp': 'Envoyez par WhatsApp avec un compte gratuit.',
+        'create_chantier': `Créez plus de chantiers avec un compte gratuit.`
     };
 
     showDemoUpgradeModal(customMessage || messages[action] || 'Cette fonctionnalité n\'est pas disponible en mode démo.');
@@ -4259,6 +4282,7 @@ function renderAll() {
     renderHeaderStats();
     renderProfile();
     updateTrialIndicator();
+    checkExpiredState();
 }
 
 // Rendre le profil utilisateur dynamique
@@ -4550,6 +4574,10 @@ function openNewChantierModal() {
     const artisanInput = document.getElementById('new-artisan-name');
     if (artisanInput) artisanInput.value = appData.user.name;
 
+    // Empêcher de choisir une date passée
+    const dateInput = document.getElementById('new-estimated-end');
+    if (dateInput) dateInput.min = new Date().toISOString().split('T')[0];
+
     // Afficher info sur les chantiers restants si en essai
     const trialInfo = getTrialInfoMessage();
     const infoContainer = document.getElementById('new-chantier-trial-info');
@@ -4577,6 +4605,12 @@ function createChantier() {
 }
 
 async function createChantierWithLoading(btn) {
+    // Bloquer si essai expiré
+    if (isReadOnly()) {
+        showTrialLimitModal();
+        return;
+    }
+
     // Récupérer les valeurs du formulaire via les IDs
     const chantierNameInput = document.getElementById('new-chantier-name');
     const clientNameInput = document.getElementById('new-client-name');
@@ -5347,6 +5381,12 @@ function setButtonLoading(btn, loading) {
 
 // Enhanced send update with loading
 async function sendUpdateWithLoading(btn) {
+    // Bloquer si essai expiré
+    if (isReadOnly()) {
+        showTrialLimitModal();
+        return;
+    }
+
     console.log('sendUpdateWithLoading called');
     const c = getCurrentChantier();
     if (!c) {
@@ -5461,6 +5501,12 @@ async function sendUpdateWithLoading(btn) {
 
 // Archiver un chantier
 async function archiveChantier(id) {
+    // Bloquer si essai expiré
+    if (isReadOnly()) {
+        showTrialLimitModal();
+        return;
+    }
+
     // Convertir l'ID en string pour la comparaison (UUID Supabase vs number démo)
     const idStr = String(id);
     const chantier = appData.chantiers.find(c => String(c.id) === idStr);
@@ -5844,6 +5890,26 @@ function updateSubscriptionStatus() {
             badgeEl.textContent = 'Pro ⭐';
             badgeEl.className = 'px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-700 rounded-full';
         }
+    } else if (subscription.status === 'expired') {
+        statusEl.className = 'mb-6 p-4 rounded-xl bg-gradient-to-r from-red-50 to-orange-50 border border-red-200';
+        statusEl.innerHTML = `
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <span class="text-xl">⏰</span>
+                </div>
+                <div>
+                    <p class="font-semibold text-slate-800">Essai terminé</p>
+                    <p class="text-sm text-slate-600">Vos chantiers sont en <strong>lecture seule</strong></p>
+                </div>
+            </div>
+            <button onclick="closeSettingsPanel(); showSubscriptionModal();" class="w-full bg-primary-600 text-white py-2.5 rounded-xl font-semibold hover:bg-primary-700 text-sm">
+                Choisir un abonnement
+            </button>
+        `;
+        if (badgeEl) {
+            badgeEl.textContent = 'Expiré';
+            badgeEl.className = 'px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full';
+        }
     }
 }
 
@@ -5854,17 +5920,35 @@ function getSubscriptionInfo() {
         localStorage.setItem('trial-start', new Date().toISOString());
     }
 
+    // Vérifier si un abonnement est actif (sera géré par Stripe plus tard)
+    const activeSubscription = localStorage.getItem('subscription-plan');
+    if (activeSubscription) {
+        return {
+            status: 'active',
+            trialDaysLeft: 0,
+            plan: activeSubscription,
+            expiresAt: localStorage.getItem('subscription-expires') || null
+        };
+    }
+
     const startDate = new Date(localStorage.getItem('trial-start'));
     const now = new Date();
     const daysPassed = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
     const daysLeft = Math.max(0, 14 - daysPassed);
 
     return {
-        status: 'trial', // 'trial', 'active', 'lifetime', 'expired'
+        status: daysLeft > 0 ? 'trial' : 'expired',
         trialDaysLeft: daysLeft,
         plan: null,
         expiresAt: null
     };
+}
+
+// Vérifier si l'app est en mode lecture seule (trial expiré, pas d'abonnement)
+function isReadOnly() {
+    if (IS_ADMIN_MODE || APP_MODE === 'admin' || APP_MODE === 'demo') return false;
+    const subscription = getSubscriptionInfo();
+    return subscription.status === 'expired';
 }
 
 function handleSubscribe() {
@@ -5898,115 +5982,112 @@ function openSubscriptionModal() {
 }
 
 // =============================================
-// GESTION LIMITE ESSAI (3 CHANTIERS MAX)
+// GESTION ESSAI GRATUIT (14 JOURS TOUT DÉBLOQUÉ)
 // =============================================
-
-const TRIAL_CHANTIER_LIMIT = 3;
 
 // Vérifier si l'utilisateur peut créer un nouveau chantier
 function canCreateChantier() {
-    const subscription = getSubscriptionInfo();
-
     // Mode admin Pro = accès illimité
     if (IS_ADMIN_MODE || APP_MODE === 'admin') {
-        return { allowed: true, remaining: Infinity };
-    }
-
-    // Utilisateurs payants = pas de limite
-    if (subscription.status === 'active' || subscription.status === 'lifetime') {
-        return { allowed: true, remaining: Infinity };
+        return { allowed: true };
     }
 
     // Mode démo = pas de limite (pour tester)
     if (APP_MODE === 'demo') {
-        return { allowed: true, remaining: Infinity };
+        return { allowed: true };
     }
 
-    // Essai gratuit = limite à 3 chantiers (actifs + archivés)
-    const activeChantiers = appData.chantiers?.length || 0;
-    const archivedChantiers = appData.archivedChantiers?.length || 0;
-    const totalChantiers = activeChantiers + archivedChantiers;
-    const remaining = TRIAL_CHANTIER_LIMIT - totalChantiers;
+    // Trial expiré sans abonnement = lecture seule
+    if (isReadOnly()) {
+        return { allowed: false, reason: 'expired' };
+    }
 
-    return {
-        allowed: remaining > 0,
-        remaining: Math.max(0, remaining),
-        current: totalChantiers,
-        limit: TRIAL_CHANTIER_LIMIT
-    };
+    // Trial actif ou abonnement actif = tout débloqué
+    return { allowed: true };
 }
 
-// Afficher le modal limite atteinte
+// Afficher le modal essai expiré
 function showTrialLimitModal() {
     document.getElementById('trialLimitModal').classList.add('active');
 }
 
-// Fermer le modal limite atteinte
+// Fermer le modal essai expiré
 function closeTrialLimitModal(event) {
     if (!event || event.target === event.currentTarget) {
         document.getElementById('trialLimitModal').classList.remove('active');
     }
 }
 
-// Obtenir le message d'info sur les chantiers restants
+// Obtenir le message d'info sur l'essai
 function getTrialInfoMessage() {
-    const check = canCreateChantier();
-    if (check.remaining === Infinity) return null;
+    const subscription = getSubscriptionInfo();
+    if (subscription.status === 'active' || subscription.status === 'lifetime') return null;
+    if (IS_ADMIN_MODE || APP_MODE === 'admin' || APP_MODE === 'demo') return null;
 
-    if (check.remaining === 0) {
-        return { type: 'warning', text: `Limite atteinte (${check.limit}/${check.limit} chantiers)` };
-    } else if (check.remaining === 1) {
-        return { type: 'info', text: `Plus qu'1 chantier disponible sur ${check.limit}` };
-    } else {
-        return { type: 'info', text: `${check.remaining} chantiers disponibles sur ${check.limit}` };
+    if (subscription.status === 'expired') {
+        return { type: 'warning', text: 'Essai terminé — passez Pro pour continuer' };
     }
+
+    const days = subscription.trialDaysLeft;
+    if (days <= 3) {
+        return { type: 'warning', text: `Plus que ${days} jour${days > 1 ? 's' : ''} d'essai gratuit` };
+    }
+    return { type: 'info', text: `Essai gratuit : ${days} jours restants` };
 }
 
-// Mettre à jour l'indicateur de limite dans le dashboard
+// Mettre à jour l'indicateur d'essai dans le dashboard
 function updateTrialIndicator() {
     const container = document.getElementById('trial-limit-indicator');
     if (!container) return;
 
-    const check = canCreateChantier();
     const subscription = getSubscriptionInfo();
 
-    // Ne pas afficher pour les utilisateurs payants ou en mode démo
-    if (check.remaining === Infinity) {
+    // Ne pas afficher pour les utilisateurs payants, admin ou démo
+    if (subscription.status === 'active' || subscription.status === 'lifetime' || IS_ADMIN_MODE || APP_MODE === 'admin' || APP_MODE === 'demo') {
         container.classList.add('hidden');
         return;
     }
 
     container.classList.remove('hidden');
 
-    const percentage = (check.current / check.limit) * 100;
-    const isWarning = check.remaining <= 1;
-    const isLimitReached = check.remaining === 0;
+    if (subscription.status === 'expired') {
+        // Trial expiré
+        container.innerHTML = `
+            <div class="p-3 rounded-xl bg-gradient-to-r from-red-50 to-orange-50 border border-red-200">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-red-600 font-medium">
+                            Essai terminé
+                        </span>
+                    </div>
+                    <button onclick="showSubscriptionModal()" class="text-xs bg-primary-600 text-white px-3 py-1.5 rounded-lg hover:bg-primary-700 font-medium">
+                        S'abonner
+                    </button>
+                </div>
+                <p class="text-xs text-red-500 mt-2">Vos chantiers sont en lecture seule. Abonnez-vous pour continuer.</p>
+            </div>
+        `;
+    } else {
+        // Trial actif
+        const days = subscription.trialDaysLeft;
+        const progress = (days / 14) * 100;
+        const isWarning = days <= 3;
 
-    container.innerHTML = `
-        <div class="p-3 rounded-xl ${isLimitReached ? 'bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200' : 'bg-slate-50 border border-slate-200'}">
-            <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center gap-2">
+        container.innerHTML = `
+            <div class="p-3 rounded-xl ${isWarning ? 'bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200' : 'bg-slate-50 border border-slate-200'}">
+                <div class="flex items-center justify-between mb-2">
                     <span class="text-sm ${isWarning ? 'text-amber-600' : 'text-slate-600'}">
-                        ${isLimitReached ? '🔒' : '📊'} Chantiers utilisés
+                        Essai gratuit
                     </span>
+                    <span class="text-sm font-semibold ${isWarning ? 'text-amber-700' : 'text-slate-700'}">${days} jour${days > 1 ? 's' : ''} restant${days > 1 ? 's' : ''}</span>
                 </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-sm font-semibold ${isLimitReached ? 'text-amber-700' : 'text-slate-700'}">${check.current}/${check.limit}</span>
-                    ${isLimitReached ? `
-                        <button onclick="showSubscriptionModal()" class="text-xs bg-primary-600 text-white px-2 py-1 rounded-lg hover:bg-primary-700">
-                            Passer Pro
-                        </button>
-                    ` : ''}
+                <div class="h-2 ${isWarning ? 'bg-amber-200' : 'bg-slate-200'} rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all ${isWarning ? 'bg-amber-500' : 'bg-primary-500'}" style="width: ${progress}%"></div>
                 </div>
+                <p class="text-xs text-slate-400 mt-2">Toutes les fonctionnalités sont débloquées</p>
             </div>
-            <div class="h-2 bg-slate-200 rounded-full overflow-hidden">
-                <div class="h-full rounded-full transition-all ${isLimitReached ? 'bg-amber-500' : isWarning ? 'bg-amber-400' : 'bg-primary-500'}" style="width: ${percentage}%"></div>
-            </div>
-            ${subscription.status === 'trial' && subscription.trialDaysLeft > 0 ? `
-                <p class="text-xs text-slate-400 mt-2">Essai gratuit : ${subscription.trialDaysLeft} jour${subscription.trialDaysLeft > 1 ? 's' : ''} restant${subscription.trialDaysLeft > 1 ? 's' : ''}</p>
-            ` : ''}
-        </div>
-    `;
+        `;
+    }
 }
 
 // =============================================
@@ -6147,6 +6228,12 @@ function selectEquipeColor(color) {
 
 // Ajouter une équipe au chantier actuel
 async function addEquipeToChantier() {
+    // Bloquer si essai expiré
+    if (isReadOnly()) {
+        showTrialLimitModal();
+        return;
+    }
+
     const name = document.getElementById('equipe-intervention-name').value.trim();
     const entreprise = document.getElementById('equipe-entreprise-name').value.trim();
     const phone = document.getElementById('equipe-phone')?.value.trim() || '';
