@@ -323,6 +323,34 @@
                 padding-top: 36px;
             }
         }
+
+        /* Plan selection styles - fonctionne en light ET dark mode */
+        .plan-card.selected {
+            border-color: #4f46e5 !important;
+            background-color: #eef2ff !important;
+        }
+        .plan-card.selected .plan-title,
+        .plan-card.selected .plan-price {
+            color: #312e81 !important;
+        }
+        .plan-card.selected .plan-subtitle {
+            color: #6366f1 !important;
+        }
+        body.dark .plan-card.selected,
+        .dark .plan-card.selected {
+            background-color: rgba(79, 70, 229, 0.2) !important;
+            border-color: #6366f1 !important;
+        }
+        body.dark .plan-card.selected .plan-title,
+        .dark .plan-card.selected .plan-title,
+        body.dark .plan-card.selected .plan-price,
+        .dark .plan-card.selected .plan-price {
+            color: #e0e7ff !important;
+        }
+        body.dark .plan-card.selected .plan-subtitle,
+        .dark .plan-card.selected .plan-subtitle {
+            color: #a5b4fc !important;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-100 to-slate-200 min-h-screen flex items-center justify-center p-8">
@@ -1832,52 +1860,52 @@
         <!-- 3 Plans -->
         <div class="space-y-3 mb-5">
             <!-- Solo -->
-            <label class="block cursor-pointer">
-                <input type="radio" name="plan" value="solo" class="hidden peer">
-                <div class="p-4 border-2 border-slate-200 dark:border-slate-600 rounded-xl peer-checked:border-primary-600 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/30 transition-all">
+            <label class="block cursor-pointer plan-option">
+                <input type="radio" name="plan" value="solo" class="hidden" onchange="updatePlanSelection()">
+                <div class="plan-card p-4 border-2 border-slate-200 dark:border-slate-600 rounded-xl transition-all">
                     <div class="flex justify-between items-center">
                         <div>
-                            <p class="font-semibold text-slate-800 dark:text-white">Solo</p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">5 chantiers - 100 SMS/mois</p>
+                            <p class="plan-title font-semibold text-slate-800 dark:text-white">Solo</p>
+                            <p class="plan-subtitle text-xs text-slate-500 dark:text-slate-400">5 chantiers - 100 SMS/mois</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-2xl font-bold text-slate-800 dark:text-white">49,99€</p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">/mois</p>
+                            <p class="plan-price text-2xl font-bold text-slate-800 dark:text-white">49,99€</p>
+                            <p class="plan-subtitle text-xs text-slate-500 dark:text-slate-400">/mois</p>
                         </div>
                     </div>
                 </div>
             </label>
 
             <!-- Pro (recommandé) -->
-            <label class="block cursor-pointer">
-                <input type="radio" name="plan" value="pro" class="hidden peer" checked>
-                <div class="p-4 border-2 border-slate-200 dark:border-slate-600 rounded-xl peer-checked:border-primary-600 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/30 transition-all relative">
+            <label class="block cursor-pointer plan-option">
+                <input type="radio" name="plan" value="pro" class="hidden" checked onchange="updatePlanSelection()">
+                <div class="plan-card p-4 border-2 border-slate-200 dark:border-slate-600 rounded-xl transition-all relative">
                     <span class="absolute -top-2 left-4 px-2 py-0.5 bg-primary-600 text-white text-xs font-medium rounded-full">Populaire</span>
                     <div class="flex justify-between items-center">
                         <div>
-                            <p class="font-semibold text-slate-800 dark:text-white">Pro</p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">Chantiers illimités - 200 SMS/mois</p>
+                            <p class="plan-title font-semibold text-slate-800 dark:text-white">Pro</p>
+                            <p class="plan-subtitle text-xs text-slate-500 dark:text-slate-400">Chantiers illimités - 200 SMS/mois</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-2xl font-bold text-slate-800 dark:text-white">69,99€</p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">/mois</p>
+                            <p class="plan-price text-2xl font-bold text-slate-800 dark:text-white">69,99€</p>
+                            <p class="plan-subtitle text-xs text-slate-500 dark:text-slate-400">/mois</p>
                         </div>
                     </div>
                 </div>
             </label>
 
             <!-- Agence -->
-            <label class="block cursor-pointer">
-                <input type="radio" name="plan" value="agence" class="hidden peer">
-                <div class="p-4 border-2 border-slate-200 dark:border-slate-600 rounded-xl peer-checked:border-primary-600 peer-checked:bg-primary-50 dark:peer-checked:bg-primary-900/30 transition-all">
+            <label class="block cursor-pointer plan-option">
+                <input type="radio" name="plan" value="agence" class="hidden" onchange="updatePlanSelection()">
+                <div class="plan-card p-4 border-2 border-slate-200 dark:border-slate-600 rounded-xl transition-all">
                     <div class="flex justify-between items-center">
                         <div>
-                            <p class="font-semibold text-slate-800 dark:text-white">Agence</p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">Tout illimité - 500 SMS/mois</p>
+                            <p class="plan-title font-semibold text-slate-800 dark:text-white">Agence</p>
+                            <p class="plan-subtitle text-xs text-slate-500 dark:text-slate-400">Tout illimité - 500 SMS/mois</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-2xl font-bold text-slate-800 dark:text-white">119,99€</p>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">/mois</p>
+                            <p class="plan-price text-2xl font-bold text-slate-800 dark:text-white">119,99€</p>
+                            <p class="plan-subtitle text-xs text-slate-500 dark:text-slate-400">/mois</p>
                         </div>
                     </div>
                 </div>
@@ -5730,6 +5758,17 @@ function showLegalTab(tab) {
 function showSubscriptionModal() {
     document.getElementById('subscriptionModal').classList.add('active');
     updateSubscriptionStatus();
+    updatePlanSelection();
+}
+
+function updatePlanSelection() {
+    document.querySelectorAll('.plan-option .plan-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    const checked = document.querySelector('input[name="plan"]:checked');
+    if (checked) {
+        checked.closest('.plan-option').querySelector('.plan-card').classList.add('selected');
+    }
 }
 
 function closeSubscriptionModal(event) {
