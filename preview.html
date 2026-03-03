@@ -4626,6 +4626,17 @@ async function createChantierWithLoading(btn) {
         return;
     }
 
+    // Valider que la date n'est pas dans le passé
+    if (estimatedEnd) {
+        const selected = new Date(estimatedEnd);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (selected < today) {
+            showToast('⚠️ La date de fin ne peut pas être dans le passé');
+            return;
+        }
+    }
+
     setButtonLoading(btn, true);
 
     // Créer le chantier (async pour Supabase)
